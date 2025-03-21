@@ -1,6 +1,8 @@
 extends Node2D
 class_name ObstacleManager
 
+signal obstacle_passed
+
 # Obstacle prefabs
 @export var obstacle_scene: PackedScene
 @export var ground_obstacle_scene: PackedScene
@@ -24,9 +26,13 @@ var current_speed = 0.0
 var is_active = false
 var game_time = 0.0
 var difficulty_factor = 0.0  # 0 to 1, increases over time
+var player_reference = null
 
 func _ready():
 	randomize()  # Initialize random seed
+
+func set_player_reference(player):
+	player_reference = player
 
 func start():
 	# Clear any existing obstacles
@@ -97,6 +103,14 @@ func spawn_obstacle():
 		return  # No valid obstacle scene to spawn
 	
 	add_child(obstacle)
+	
+	# Connect obstacle's passed signal to our signal
+	obstacle.connect("obstacle_passed", _on_obstacle_passed)
+	
+	# Inform obstacle of player's x position
+	if player_reference:
+		obstacle.set_player_position(player_reference.global_position.x)
+	
 	active_obstacles.append(obstacle)
 	
 	# Position obstacle based on type
@@ -130,6 +144,14 @@ func spawn_obstacle():
 			
 		if second_obstacle:
 			add_child(second_obstacle)
+			second_obstacle.connect("obstacle_passed", _on_obstacle_passed)
+			
+			if player_reference:
+				second_obstacle.set_player_position(player_reference.global_position.x)
+				
 			active_obstacles.append(second_obstacle)
 			second_obstacle.position.x = spawn_x_position
 			second_obstacle.position.x += lane_positions[second_lane] - 270
+
+func _on_obstacle_passed():
+	emit_signal("obstacle_passed")
