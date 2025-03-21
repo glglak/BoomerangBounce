@@ -2,6 +2,7 @@ extends CharacterBody2D
 class_name Player
 
 signal player_hit
+signal jump_performed  # New signal for jump sound
 
 # Lane management
 var current_lane = 1  # 0 = left, 1 = middle, 2 = right
@@ -91,11 +92,13 @@ func try_jump():
 		velocity.y = jump_force
 		is_jumping = true
 		animation_player.play("jump")
+		emit_signal("jump_performed")  # Emit signal for sound
 	elif is_jumping and not has_double_jumped:
 		# Double jump
 		velocity.y = double_jump_force
 		has_double_jumped = true
 		animation_player.play("double_jump")
+		emit_signal("jump_performed")  # Emit signal for sound
 
 func update_animation():
 	if is_dead:
