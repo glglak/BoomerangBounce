@@ -42,6 +42,10 @@ func _ready() -> void:
 	
 	# Start in inactive state
 	game_active = false
+	
+	# Automatically start the game after a short delay
+	await get_tree().create_timer(0.5).timeout
+	start_game()
 
 func start_game() -> void:
 	# Reset game state
@@ -81,6 +85,10 @@ func _on_player_hit() -> void:
 	
 	# Emit game over signal
 	emit_signal("game_over", current_score)
+	
+	# Transition to Game Over scene after a short delay
+	await get_tree().create_timer(1.0).timeout
+	get_tree().change_scene_to_file("res://scenes/GameOver.tscn")
 
 func _on_boomerang_completed_loop() -> void:
 	# Player successfully dodged the boomerang
