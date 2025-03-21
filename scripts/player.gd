@@ -7,6 +7,7 @@ signal player_hit
 @export var lane_width: float = 160.0
 @export var num_lanes: int = 3
 @export var lane_change_speed: float = 10.0  # Higher = faster lane change
+@export var forward_speed: float = 150.0     # Speed for auto-forward movement
 
 # Jump properties
 @export var jump_force: float = -600.0
@@ -53,6 +54,9 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.x = 0
 		global_position.x = target_x_position
+	
+	# Apply forward movement
+	velocity.z = forward_speed
 	
 	# Apply movement
 	move_and_slide()
