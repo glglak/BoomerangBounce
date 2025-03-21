@@ -69,6 +69,15 @@ BoomerangBounce/
 2. Click the "Play" button in the top right or press F5
 3. The game should start from the main menu scene
 
+### Important Note About .gdignore Files
+
+If you cannot see the folder contents in the Godot Editor:
+1. Check each folder for a `.gdignore` file
+2. Delete any `.gdignore` files you find
+3. Refresh the FileSystem in the Godot editor
+
+These files were used to maintain the folder structure in Git but they tell Godot to ignore the contents of that folder.
+
 ### Adding Custom Assets
 
 1. **Sprites/Images**:
