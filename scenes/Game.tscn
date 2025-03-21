@@ -1,8 +1,8 @@
-[gd_scene load_steps=7 format="3 uid://cwtgkv6hjg56o"]
+[gd_scene load_steps=7 format="3"]
 
 [ext_resource type="Script" path="res://scripts/game_manager.gd" id="1_6l7x2"]
-[ext_resource type="PackedScene" uid="uid://buwpbhgddnkfm" path="res://scenes/Player.tscn" id="2_d3qdv"]
-[ext_resource type="PackedScene" uid="uid://cs6fq1p0axhnj" path="res://scenes/Boomerang.tscn" id="3_akmj3"]
+[ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="2_d3qdv"]
+[ext_resource type="PackedScene" path="res://scenes/Boomerang.tscn" id="3_akmj3"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_u70hq"]
 size = Vector2(540, 20)
