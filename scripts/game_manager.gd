@@ -8,25 +8,19 @@ signal score_updated(new_score: int)
 # Game state variables
 var current_score: int = 0
 var high_score: int = 0
-var difficulty_level: int = 1
 var game_active: bool = false
-
-# Speed increase factors
-@export var base_speed_multiplier: float = 1.0
-@export var speed_increase_per_level: float = 0.1
-@export var max_difficulty: int = 20
 
 # Path for saving high score
 const SAVE_FILE_PATH = "user://highscore.save"
 
-# References to other nodes (assigned in _ready)
+# References to other nodes
 @onready var player: Player = $Player
-@onready var boomerang: Boomerang = $Boomerang
+@onready var obstacle_manager: ObstacleManager = $ObstacleManager
 @onready var score_label: Label = $UI/ScoreLabel
 @onready var high_score_label: Label = $UI/HighScoreLabel
 @onready var countdown_timer: Timer = $CountdownTimer
-@onready var throw_timer: Timer = $ThrowTimer
 @onready var animation_player: AnimationPlayer = $AnimationPlayer
+@onready var controls: ControlsManager = $Controls
 
 func _ready() -> void:
 	# Load high score
@@ -34,48 +28,83 @@ func _ready() -> void:
 	
 	# Connect signals
 	player.connect("player_hit", _on_player_hit)
-	boomerang.connect("completed_loop", _on_boomerang_completed_loop)
+	
+	# Connect control signals to player
+	controls.connect("move_left_pressed", _on_move_left_pressed)
+	controls.connect("move_left_released", _on_move_left_released)
+	controls.connect("move_right_pressed", _on_move_right_pressed)
+	controls.connect("move_right_released", _on_move_right_released)
+	controls.connect("jump_pressed", _on_jump_pressed)
+	
+	# Set up input actions for keyboard controls as well
+	_setup_input_actions()
 	
 	# Update UI
 	update_score_display()
 	update_high_score_display()
 	
-	# Start in inactive state
-	game_active = false
-	
 	# Automatically start the game after a short delay
 	await get_tree().create_timer(0.5).timeout
 	start_game()
 
+func _setup_input_actions() -> void:
+	# Create input mappings if they don't exist
+	if not InputMap.has_action("move_left"):
+		InputMap.add_action("move_left")
+		var left_key = InputEventKey.new()
+		left_key.keycode = KEY_LEFT
+		InputMap.action_add_event("move_left", left_key)
+		
+		var a_key = InputEventKey.new()
+		a_key.keycode = KEY_A
+		InputMap.action_add_event("move_left", a_key)
+	
+	if not InputMap.has_action("move_right"):
+		InputMap.add_action("move_right")
+		var right_key = InputEventKey.new()
+		right_key.keycode = KEY_RIGHT
+		InputMap.action_add_event("move_right", right_key)
+		
+		var d_key = InputEventKey.new()
+		d_key.keycode = KEY_D
+		InputMap.action_add_event("move_right", d_key)
+	
+	if not InputMap.has_action("jump"):
+		InputMap.add_action("jump")
+		var space_key = InputEventKey.new()
+		space_key.keycode = KEY_SPACE
+		InputMap.action_add_event("jump", space_key)
+		
+		var w_key = InputEventKey.new()
+		w_key.keycode = KEY_W
+		InputMap.action_add_event("jump", w_key)
+		
+		var up_key = InputEventKey.new()
+		up_key.keycode = KEY_UP
+		InputMap.action_add_event("jump", up_key)
+
 func start_game() -> void:
 	# Reset game state
 	current_score = 0
-	difficulty_level = 1
 	game_active = true
 	
 	# Update UI
 	update_score_display()
 	
-	# Start countdown before throwing first boomerang
+	# Start countdown before beginning gameplay
 	countdown_timer.start()
 	
 	# Play start animation if available
 	animation_player.play("game_start")
 
-func throw_boomerang() -> void:
-	if not game_active:
-		return
-		
-	# Calculate speed based on current difficulty
-	var speed_multiplier = base_speed_multiplier + (difficulty_level - 1) * speed_increase_per_level
-	
-	# Throw the boomerang
-	var throw_position = Vector2(0, player.global_position.y)
-	boomerang.throw(throw_position, speed_multiplier)
+func _on_countdown_timer_timeout() -> void:
+	# Start the obstacle spawning
+	obstacle_manager.start()
 
 func _on_player_hit() -> void:
-	# Player was hit by boomerang - game over
+	# Player was hit by obstacle - game over
 	game_active = false
+	obstacle_manager.stop()
 	
 	# Check for high score
 	if current_score > high_score:
@@ -90,25 +119,10 @@ func _on_player_hit() -> void:
 	await get_tree().create_timer(1.0).timeout
 	get_tree().change_scene_to_file("res://scenes/GameOver.tscn")
 
-func _on_boomerang_completed_loop() -> void:
-	# Player successfully dodged the boomerang
-	current_score += 1
+func update_score(new_score: int) -> void:
+	current_score = new_score
 	emit_signal("score_updated", current_score)
 	update_score_display()
-	
-	# Increase difficulty level (capped at max_difficulty)
-	difficulty_level = min(difficulty_level + 1, max_difficulty)
-	
-	# Schedule next throw after a short delay
-	throw_timer.start()
-
-func _on_countdown_timer_timeout() -> void:
-	# Initial countdown finished, throw first boomerang
-	throw_boomerang()
-
-func _on_throw_timer_timeout() -> void:
-	# Delay between throws
-	throw_boomerang()
 
 func update_score_display() -> void:
 	score_label.text = "Score: %d" % current_score
@@ -135,3 +149,19 @@ func load_high_score() -> void:
 			
 			if save_data and save_data.has("high_score"):
 				high_score = save_data.high_score
+
+# Controls handlers
+func _on_move_left_pressed() -> void:
+	player.move_left()
+
+func _on_move_left_released() -> void:
+	player.stop_moving()
+
+func _on_move_right_pressed() -> void:
+	player.move_right()
+
+func _on_move_right_released() -> void:
+	player.stop_moving()
+
+func _on_jump_pressed() -> void:
+	player.try_jump()
