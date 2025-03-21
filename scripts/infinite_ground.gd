@@ -41,8 +41,8 @@ func _create_ground_segment() -> Node2D:
 	var sprite = Sprite2D.new()
 	sprite.texture = ground_texture
 	sprite.position.y = ground_height / 2
-	sprite.scale = Vector2(ground_width / sprite.texture.get_width(), 
-	                       ground_height / sprite.texture.get_height())
+	sprite.scale = Vector2(ground_width / ground_texture.get_width(), 
+	                       ground_height / ground_texture.get_height())
 	segment.add_child(sprite)
 	
 	# Add collision
@@ -69,8 +69,8 @@ func _recycle_segment() -> void:
 func set_scroll_speed(speed: float) -> void:
 	scroll_speed = speed
 
-func reset() -> void:
-	# Reset position of all segments
-	offset_x = 0.0
-	for i in range(ground_segments.size()):
-		ground_segments[i].position.x = i * ground_width
+func stop() -> void:
+	scroll_speed = 0.0
+
+func start(speed: float = 300.0) -> void:
+	scroll_speed = speed
