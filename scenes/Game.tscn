@@ -4,42 +4,11 @@
 [ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="2_d3qdv"]
 [ext_resource type="Texture2D" path="res://assets/sprites/background.svg" id="3_62h7r"]
 [ext_resource type="Script" path="res://scripts/obstacle_manager.gd" id="4_bvxuo"]
-[ext_resource type="PackedScene" path="res://scenes/Obstacle.tscn" id="5_j7gyw"]
+[ext_resource type="PackedScene" path="res://scenes/GroundObstacle.tscn" id="5_3pgr4"]
+[ext_resource type="PackedScene" path="res://scenes/AirObstacle.tscn" id="6_1e8s6"]
+[ext_resource type="PackedScene" path="res://scenes/FullObstacle.tscn" id="7_xbfwy"]
 [ext_resource type="PackedScene" path="res://scenes/Platform.tscn" id="6_l5s5v"]
 [ext_resource type="PackedScene" path="res://scenes/Controls.tscn" id="7_oonck"]
-
-[sub_resource type="Animation" id="Animation_uvt4p"]
-resource_name = "game_start"
-length = 1.0
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("UI/CountdownLabel:text")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0, 0.3, 0.6, 0.9),
-"transitions": PackedFloat32Array(1, 1, 1, 1),
-"update": 1,
-"values": ["3", "2", "1", "GO!"]
-}
-tracks/1/type = "value"
-tracks/1/imported = false
-tracks/1/enabled = true
-tracks/1/path = NodePath("UI/CountdownLabel:visible")
-tracks/1/interp = 1
-tracks/1/loop_wrap = true
-tracks/1/keys = {
-"times": PackedFloat32Array(0, 1),
-"transitions": PackedFloat32Array(1, 1),
-"update": 1,
-"values": [true, false]
-}
-
-[sub_resource type="AnimationLibrary" id="AnimationLibrary_cna2s"]
-_data = {
-"game_start": SubResource("Animation_uvt4p")
-}
 
 [node name="Game" type="Node"]
 script = ExtResource("1_6l7x2")
@@ -56,45 +25,15 @@ stretch_mode = 6
 
 [node name="ObstacleManager" type="Node2D" parent="."]
 script = ExtResource("4_bvxuo")
-obstacle_scene = ExtResource("5_j7gyw")
+ground_obstacle_scene = ExtResource("5_3pgr4")
+air_obstacle_scene = ExtResource("6_1e8s6")
+full_obstacle_scene = ExtResource("7_xbfwy")
 
 [node name="Platforms" type="Node2D" parent="."]
 
 [node name="Ground" parent="Platforms" instance=ExtResource("6_l5s5v")]
 position = Vector2(270, 920)
 scale = Vector2(4.5, 1)
-
-[node name="Platform1" parent="Platforms" instance=ExtResource("6_l5s5v")]
-position = Vector2(100, 780)
-scale = Vector2(0.7, 1)
-
-[node name="Platform2" parent="Platforms" instance=ExtResource("6_l5s5v")]
-position = Vector2(440, 780)
-scale = Vector2(0.7, 1)
-
-[node name="Platform3" parent="Platforms" instance=ExtResource("6_l5s5v")]
-position = Vector2(270, 640)
-scale = Vector2(0.9, 1)
-is_moving = true
-move_speed = 50.0
-move_distance = 150.0
-move_direction = Vector2(1, 0)
-
-[node name="Platform4" parent="Platforms" instance=ExtResource("6_l5s5v")]
-position = Vector2(100, 500)
-scale = Vector2(0.6, 1)
-
-[node name="Platform5" parent="Platforms" instance=ExtResource("6_l5s5v")]
-position = Vector2(440, 500)
-scale = Vector2(0.6, 1)
-
-[node name="Platform6" parent="Platforms" instance=ExtResource("6_l5s5v")]
-position = Vector2(270, 360)
-scale = Vector2(0.8, 1)
-is_moving = true
-move_speed = 60.0
-move_distance = 200.0
-move_direction = Vector2(1, 0)
 
 [node name="Player" parent="." instance=ExtResource("2_d3qdv")]
 position = Vector2(270, 860)
@@ -156,7 +95,20 @@ theme_override_font_sizes/font_size = 18
 text = "High Score: 0"
 horizontal_alignment = 1
 
-[node name="CountdownLabel" type="Label" parent="UI"]
+[node name="RestartButton" type="Button" parent="UI"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -110.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = 60.0
+grow_horizontal = 0
+theme_override_font_sizes/font_size = 16
+text = "Restart"
+
+[node name="GameOverPanel" type="Panel" parent="UI"]
 visible = false
 layout_mode = 1
 anchors_preset = 8
@@ -164,30 +116,58 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -50.0
-offset_top = -50.0
-offset_right = 50.0
-offset_bottom = 50.0
+offset_left = -150.0
+offset_top = -100.0
+offset_right = 150.0
+offset_bottom = 100.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.780392)
-theme_override_constants/shadow_offset_x = 3
-theme_override_constants/shadow_offset_y = 3
-theme_override_constants/shadow_outline_size = 5
-theme_override_font_sizes/font_size = 72
-text = "3"
+
+[node name="GameOverLabel" type="Label" parent="UI/GameOverPanel"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -120.0
+offset_top = 20.0
+offset_right = 120.0
+offset_bottom = 60.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 28
+text = "Game Over!"
 horizontal_alignment = 1
-vertical_alignment = 1
 
-[node name="CountdownTimer" type="Timer" parent="."]
-wait_time = 1.0
-one_shot = true
+[node name="ScoreLabel" type="Label" parent="UI/GameOverPanel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -100.0
+offset_top = -20.0
+offset_right = 100.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 24
+text = "Score: 0"
+horizontal_alignment = 1
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
-libraries = {
-"": SubResource("AnimationLibrary_cna2s")
-}
+[node name="RestartButton" type="Button" parent="UI/GameOverPanel"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -80.0
+offset_top = -60.0
+offset_right = 80.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 20
+text = "Play Again"
 
 [node name="Controls" parent="." instance=ExtResource("7_oonck")]
-
-[connection signal="timeout" from="CountdownTimer" to="." method="_on_countdown_timer_timeout"]
