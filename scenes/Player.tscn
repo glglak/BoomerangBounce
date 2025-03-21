@@ -1,10 +1,10 @@
-[gd_scene load_steps=7 format="3"]
+[gd_scene load_steps=8 format="3"]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1_p42n4"]
 [ext_resource type="Texture2D" path="res://assets/sprites/player.svg" id="2_s8r45"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_myw4q"]
-size = Vector2(50, 50)
+size = Vector2(50, 60)
 
 [sub_resource type="Animation" id="Animation_l30ow"]
 resource_name = "fall"
@@ -24,7 +24,7 @@ tracks/0/keys = {
 
 [sub_resource type="Animation" id="Animation_7ym2j"]
 resource_name = "idle"
-length = 0.5
+length = 1.0
 loop_mode = 1
 tracks/0/type = "value"
 tracks/0/imported = false
@@ -33,7 +33,7 @@ tracks/0/path = NodePath("Sprite2D:scale")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
-"times": PackedFloat32Array(0, 0.25, 0.5),
+"times": PackedFloat32Array(0, 0.5, 1),
 "transitions": PackedFloat32Array(1, 1, 1),
 "update": 0,
 "values": [Vector2(1, 1), Vector2(1.05, 0.95), Vector2(1, 1)]
@@ -55,20 +55,58 @@ tracks/0/keys = {
 "values": [Vector2(1, 1), Vector2(0.8, 1.2), Vector2(1, 1)]
 }
 
+[sub_resource type="Animation" id="Animation_xvs8p"]
+resource_name = "double_jump"
+length = 0.5
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.3, 0.5),
+"transitions": PackedFloat32Array(0.5, 2, 0.5, 1),
+"update": 0,
+"values": [Vector2(1, 1), Vector2(0.7, 1.3), Vector2(1.3, 0.7), Vector2(1, 1)]
+}
+
+[sub_resource type="Animation" id="Animation_rt2vd"]
+resource_name = "run"
+length = 0.6
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.15, 0.3, 0.45, 0.6),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector2(1, 1), Vector2(1.1, 0.9), Vector2(1, 1), Vector2(0.9, 1.1), Vector2(1, 1)]
+}
+
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_kvbvm"]
 _data = {
+"double_jump": SubResource("Animation_xvs8p"),
 "fall": SubResource("Animation_l30ow"),
 "idle": SubResource("Animation_7ym2j"),
-"jump": SubResource("Animation_g3pdl")
+"jump": SubResource("Animation_g3pdl"),
+"run": SubResource("Animation_rt2vd")
 }
 
 [node name="Player" type="CharacterBody2D"]
+collision_layer = 2
+collision_mask = 5
 script = ExtResource("1_p42n4")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = ExtResource("2_s8r45")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, 2)
 shape = SubResource("RectangleShape2D_myw4q")
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
