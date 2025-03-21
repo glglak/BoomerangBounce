@@ -1,55 +1,41 @@
-[gd_scene load_steps=10 format="3"]
+[gd_scene load_steps=7 format="3"]
 
 [ext_resource type="Script" path="res://scripts/game_manager.gd" id="1_6l7x2"]
 [ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="2_d3qdv"]
-[ext_resource type="Texture2D" path="res://assets/sprites/background.svg" id="3_62h7r"]
 [ext_resource type="Script" path="res://scripts/obstacle_manager.gd" id="4_bvxuo"]
+[ext_resource type="PackedScene" path="res://scenes/Obstacle.tscn" id="5_j7gyw"]
 [ext_resource type="PackedScene" path="res://scenes/GroundObstacle.tscn" id="5_3pgr4"]
 [ext_resource type="PackedScene" path="res://scenes/AirObstacle.tscn" id="6_1e8s6"]
-[ext_resource type="PackedScene" path="res://scenes/FullObstacle.tscn" id="7_xbfwy"]
-[ext_resource type="PackedScene" path="res://scenes/Platform.tscn" id="6_l5s5v"]
-[ext_resource type="PackedScene" path="res://scenes/Controls.tscn" id="7_oonck"]
 
 [node name="Game" type="Node"]
 script = ExtResource("1_6l7x2")
 
-[node name="Background" type="TextureRect" parent="."]
+[node name="Background" type="ColorRect" parent="."]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-texture = ExtResource("3_62h7r")
-expand_mode = 1
-stretch_mode = 6
+color = Color(0.2, 0.4, 0.6, 1.0)
+
+[node name="Ground" type="ColorRect" parent="."]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -100.0
+grow_horizontal = 2
+grow_vertical = 0
+color = Color(0.15, 0.15, 0.15, 1.0)
+
+[node name="Player" parent="." instance=ExtResource("2_d3qdv")]
+position = Vector2(100, 800)
 
 [node name="ObstacleManager" type="Node2D" parent="."]
 script = ExtResource("4_bvxuo")
+obstacle_scene = ExtResource("5_j7gyw")
 ground_obstacle_scene = ExtResource("5_3pgr4")
 air_obstacle_scene = ExtResource("6_1e8s6")
-full_obstacle_scene = ExtResource("7_xbfwy")
-
-[node name="Platforms" type="Node2D" parent="."]
-
-[node name="Ground" parent="Platforms" instance=ExtResource("6_l5s5v")]
-position = Vector2(270, 920)
-scale = Vector2(4.5, 1)
-
-[node name="Player" parent="." instance=ExtResource("2_d3qdv")]
-position = Vector2(270, 860)
-
-[node name="Camera2D" type="Camera2D" parent="Player"]
-limit_left = 0
-limit_right = 540
-limit_bottom = 960
-position_smoothing_enabled = true
-position_smoothing_speed = 3.0
-drag_horizontal_enabled = true
-drag_vertical_enabled = true
-drag_left_margin = 0.1
-drag_top_margin = 0.1
-drag_right_margin = 0.1
-drag_bottom_margin = 0.1
 
 [node name="UI" type="Control" parent="."]
 layout_mode = 3
@@ -107,6 +93,15 @@ offset_bottom = 60.0
 grow_horizontal = 0
 theme_override_font_sizes/font_size = 16
 text = "Restart"
+
+[node name="Lane1Marker" type="Marker2D" parent="."]
+position = Vector2(100, 800)
+
+[node name="Lane2Marker" type="Marker2D" parent="."]
+position = Vector2(270, 800)
+
+[node name="Lane3Marker" type="Marker2D" parent="."]
+position = Vector2(440, 800)
 
 [node name="GameOverPanel" type="Panel" parent="UI"]
 visible = false
@@ -170,4 +165,52 @@ grow_vertical = 0
 theme_override_font_sizes/font_size = 20
 text = "Play Again"
 
-[node name="Controls" parent="." instance=ExtResource("7_oonck")]
+[node name="Controls" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="LeftButton" type="Button" parent="Controls"]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = -100.0
+offset_right = 100.0
+offset_bottom = -20.0
+grow_vertical = 0
+text = "←"
+
+[node name="RightButton" type="Button" parent="Controls"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -100.0
+offset_top = -100.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 0
+grow_vertical = 0
+text = "→"
+
+[node name="JumpButton" type="Button" parent="Controls"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -40.0
+offset_top = -100.0
+offset_right = 40.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "Jump"
