@@ -1,12 +1,28 @@
-[gd_scene load_steps=7 format="3"]
+[gd_scene load_steps=7 format="3 uid://buwpbhgddnkfm"]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1_p42n4"]
-[ext_resource type="Texture2D" path="res://assets/sprites/player.svg" id="2_s8r45"]
+[ext_resource type="Texture2D" uid="uid://bdl2ukxrbi5tm" path="res://assets/sprites/player.svg" id="2_s8r45"]
 
-[sub_resource type="RectangleShape2D" id="1"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_myw4q"]
 size = Vector2(50, 50)
 
-[sub_resource type="Animation" id="Animation_idle"]
+[sub_resource type="Animation" id="Animation_l30ow"]
+resource_name = "fall"
+length = 0.5
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.3, 0.5),
+"transitions": PackedFloat32Array(0.5, 2, 1),
+"update": 0,
+"values": [Vector2(1, 1), Vector2(1.2, 0.8), Vector2(1, 1)]
+}
+
+[sub_resource type="Animation" id="Animation_7ym2j"]
 resource_name = "idle"
 length = 0.5
 loop_mode = 1
@@ -23,7 +39,7 @@ tracks/0/keys = {
 "values": [Vector2(1, 1), Vector2(1.05, 0.95), Vector2(1, 1)]
 }
 
-[sub_resource type="Animation" id="Animation_jump"]
+[sub_resource type="Animation" id="Animation_g3pdl"]
 resource_name = "jump"
 length = 0.5
 tracks/0/type = "value"
@@ -39,20 +55,11 @@ tracks/0/keys = {
 "values": [Vector2(1, 1), Vector2(0.8, 1.2), Vector2(1, 1)]
 }
 
-[sub_resource type="Animation" id="Animation_fall"]
-resource_name = "fall"
-length = 0.5
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("Sprite2D:scale")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0, 0.3, 0.5),
-"transitions": PackedFloat32Array(0.5, 2, 1),
-"update": 0,
-"values": [Vector2(1, 1), Vector2(1.2, 0.8), Vector2(1, 1)]
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_kvbvm"]
+_data = {
+"fall": SubResource("Animation_l30ow"),
+"idle": SubResource("Animation_7ym2j"),
+"jump": SubResource("Animation_g3pdl")
 }
 
 [node name="Player" type="CharacterBody2D"]
@@ -62,16 +69,9 @@ script = ExtResource("1_p42n4")
 texture = ExtResource("2_s8r45")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-shape = SubResource("1")
+shape = SubResource("RectangleShape2D_myw4q")
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 libraries = {
-"": SubResource("AnimationLibrary")
-}
-
-[sub_resource type="AnimationLibrary" id="AnimationLibrary"]
-_data = {
-"fall": SubResource("Animation_fall"),
-"idle": SubResource("Animation_idle"),
-"jump": SubResource("Animation_jump")
+"": SubResource("AnimationLibrary_kvbvm")
 }
