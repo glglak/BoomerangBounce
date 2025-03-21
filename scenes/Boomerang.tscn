@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format="3"]
+
+[ext_resource type="Script" path="res://scripts/boomerang.gd" id="1_rlm82"]
+[ext_resource type="Texture2D" path="res://assets/sprites/boomerang.svg" id="2_uv8r5"]
+
+[sub_resource type="RectangleShape2D" id="1"]
+size = Vector2(40, 40)
+
+[node name="Boomerang" type="Area2D"]
+script = ExtResource("1_rlm82")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_uv8r5")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("1")
