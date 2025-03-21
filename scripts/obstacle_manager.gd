@@ -2,7 +2,6 @@ extends Node2D
 class_name ObstacleManager
 
 # Obstacle prefabs
-@export var obstacle_scenes: Array[PackedScene] = []
 @export var ground_obstacle_scene: PackedScene
 @export var air_obstacle_scene: PackedScene
 @export var full_obstacle_scene: PackedScene
@@ -18,29 +17,21 @@ class_name ObstacleManager
 @export var obstacle_lifetime: float = 10.0       # Seconds before automatically removing obstacles
 @export var obstacle_move_speed: float = 300.0    # Initial speed of obstacles
 @export var speed_increase_rate: float = 10.0     # How much to increase speed over time
-@export var difficulty_ramp_time: float = 30.0    # Seconds until reaching maximum difficulty
 
 # Internal variables
 var active_obstacles: Array = []
 var spawn_position: float = 0.0
-var spawn_timer: float = 0.0
-var next_spawn_distance: float = 0.0
 var current_speed: float = 0.0
 var is_active: bool = false
-var game_time: float = 0.0
 
 func _ready() -> void:
-	# Initialize with default obstacle if none specified
-	if obstacle_scenes.is_empty() and ground_obstacle_scene == null and air_obstacle_scene == null:
+	# Just a simple check if obstacle scenes are set
+	if ground_obstacle_scene == null and air_obstacle_scene == null and full_obstacle_scene == null:
 		printerr("Warning: No obstacle scenes assigned to ObstacleManager")
 
 func _process(delta: float) -> void:
 	if not is_active:
 		return
-	
-	# Increase game time and update difficulty
-	game_time += delta
-	var difficulty_progress = min(game_time / difficulty_ramp_time, 1.0)
 	
 	# Move and update obstacles
 	var obstacles_to_remove = []
@@ -65,7 +56,6 @@ func _process(delta: float) -> void:
 func start() -> void:
 	# Reset internal state
 	is_active = true
-	game_time = 0.0
 	
 	# Clear any existing obstacles
 	for obstacle in active_obstacles:
@@ -99,11 +89,8 @@ func spawn_obstacle() -> void:
 		obstacle_scene = air_obstacle_scene
 	elif obstacle_type == 2 and full_obstacle_scene:
 		obstacle_scene = full_obstacle_scene
-	elif not obstacle_scenes.is_empty():
-		# Fall back to random from array if specific scenes not set
-		obstacle_scene = obstacle_scenes[randi() % obstacle_scenes.size()]
 	else:
-		# No obstacle scenes available
+		# No obstacle scenes available for the selected type
 		return
 	
 	# Create the obstacle
@@ -130,8 +117,3 @@ func spawn_obstacle() -> void:
 	# Calculate next spawn position
 	var spacing = randf_range(min_obstacle_spacing, max_obstacle_spacing)
 	spawn_position += spacing
-	
-	# Update difficulty based on game time
-	var difficulty_progress = min(game_time / difficulty_ramp_time, 1.0)
-	min_obstacle_spacing = lerp(600.0, 400.0, difficulty_progress)
-	max_obstacle_spacing = lerp(1200.0, 800.0, difficulty_progress)
