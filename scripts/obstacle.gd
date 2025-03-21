@@ -1,10 +1,13 @@
 extends Area2D
 class_name Obstacle
 
-@export var rotation_speed: float = 2.0
+# Visual properties
+@export var rotation_speed: float = 3.0
 @export var bobbing_height: float = 5.0
 @export var bobbing_speed: float = 2.0
+@export var obstacle_type: String = "ground"  # "ground", "air", or "full"
 
+# State variables
 var initial_y: float = 0
 var time_offset: float = 0
 
@@ -12,11 +15,15 @@ func _ready() -> void:
 	# Connect collision signal
 	connect("body_entered", _on_body_entered)
 	
-	# Store initial vertical position
+	# Store initial position
 	initial_y = position.y
 	
-	# Set random time offset for bobbing
-	time_offset = randf() * 10.0  # Add some variety to obstacle movement
+	# Randomize animation timing
+	time_offset = randf() * 10.0
+	
+	# Ensure proper collision
+	collision_layer = 4  # Layer 3: Obstacles
+	collision_mask = 2   # Layer 2: Player
 
 func _process(delta: float) -> void:
 	# Rotate the obstacle
@@ -28,5 +35,4 @@ func _process(delta: float) -> void:
 
 func _on_body_entered(body: Node) -> void:
 	if body is Player:
-		# Call the hit method on the player
 		body.hit()
