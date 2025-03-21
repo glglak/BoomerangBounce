@@ -1,207 +1,132 @@
 extends Node
 class_name GameManager
 
-# Game state signals
-signal game_over(score: int)
-signal score_updated(new_score: int)
-
-# Game state variables
-var current_score: int = 0
-var high_score: int = 0
-var game_active: bool = false
-
-# Game speed settings
-@export var starting_speed: float = 300.0
-@export var max_speed: float = 800.0
-@export var speed_increase_per_second: float = 5.0
-var current_speed: float = 0.0
-var distance_traveled: float = 0.0
-var score_per_distance: float = 0.1  # 1 point every 10 units
+# Score settings
+var current_score = 0
+var high_score = 0
+var score_increment_rate = 10  # Points per second
+var game_active = false
+var game_time = 0.0
 
 # Path for saving high score
 const SAVE_FILE_PATH = "user://highscore.save"
 
 # Node references
-@onready var player: Player = $Player
-@onready var obstacle_spawner: ObstacleManager = $ObstacleManager
-@onready var score_label: Label = $UI/ScoreLabel
-@onready var high_score_label: Label = $UI/HighScoreLabel
-@onready var controls: ControlsManager = $Controls
-@onready var restart_button: Button = $UI/RestartButton
-@onready var gameover_panel: Panel = $UI/GameOverPanel
+@onready var player = $Player
+@onready var obstacle_manager = $ObstacleManager
+@onready var score_label = $UI/ScoreLabel
+@onready var high_score_label = $UI/HighScoreLabel 
+@onready var game_over_panel = $UI/GameOverPanel
+@onready var restart_button = $UI/RestartButton
+@onready var gameover_restart_button = $UI/GameOverPanel/RestartButton
+@onready var left_button = $Controls/LeftButton
+@onready var right_button = $Controls/RightButton
+@onready var jump_button = $Controls/JumpButton
 
-func _ready() -> void:
+func _ready():
+	randomize()
+	
 	# Load high score
 	load_high_score()
 	
 	# Connect signals
-	player.connect("player_hit", _on_player_hit)
+	player.connect("player_hit", Callable(self, "_on_player_hit"))
+	restart_button.connect("pressed", Callable(self, "restart_game"))
+	gameover_restart_button.connect("pressed", Callable(self, "restart_game"))
+	left_button.connect("pressed", Callable(self, "_on_left_button_pressed"))
+	right_button.connect("pressed", Callable(self, "_on_right_button_pressed"))
+	jump_button.connect("pressed", Callable(self, "_on_jump_button_pressed"))
 	
-	# Connect control signals to player
-	controls.connect("move_left_pressed", _on_move_left_pressed)
-	controls.connect("move_left_released", _on_move_left_released)
-	controls.connect("move_right_pressed", _on_move_right_pressed)
-	controls.connect("move_right_released", _on_move_right_released)
-	controls.connect("jump_pressed", _on_jump_pressed)
-	
-	# Connect restart button
-	restart_button.connect("pressed", restart_game)
-	
-	# Setup input mappings
-	_setup_input_actions()
-	
-	# Update UI
-	update_score_display()
-	update_high_score_display()
-	
-	# Hide game over panel at start
-	gameover_panel.visible = false
-	
-	# Automatically start after a short delay
-	await get_tree().create_timer(0.5).timeout
-	start_game()
-
-func _setup_input_actions() -> void:
-	# Create input mappings if they don't exist
-	if not InputMap.has_action("move_left"):
-		InputMap.add_action("move_left")
-		var left_key = InputEventKey.new()
-		left_key.keycode = KEY_LEFT
-		InputMap.action_add_event("move_left", left_key)
-		
-		var a_key = InputEventKey.new()
-		a_key.keycode = KEY_A
-		InputMap.action_add_event("move_left", a_key)
-	
-	if not InputMap.has_action("move_right"):
-		InputMap.add_action("move_right")
-		var right_key = InputEventKey.new()
-		right_key.keycode = KEY_RIGHT
-		InputMap.action_add_event("move_right", right_key)
-		
-		var d_key = InputEventKey.new()
-		d_key.keycode = KEY_D
-		InputMap.action_add_event("move_right", d_key)
-	
-	if not InputMap.has_action("jump"):
-		InputMap.add_action("jump")
-		var space_key = InputEventKey.new()
-		space_key.keycode = KEY_SPACE
-		InputMap.action_add_event("jump", space_key)
-		
-		var w_key = InputEventKey.new()
-		w_key.keycode = KEY_W
-		InputMap.action_add_event("jump", w_key)
-		
-		var up_key = InputEventKey.new()
-		up_key.keycode = KEY_UP
-		InputMap.action_add_event("jump", up_key)
-		
+	# Setup input mapping for restarting
 	if not InputMap.has_action("restart"):
 		InputMap.add_action("restart")
 		var r_key = InputEventKey.new()
 		r_key.keycode = KEY_R
 		InputMap.action_add_event("restart", r_key)
+	
+	# Start game after a short delay
+	game_over_panel.visible = false
+	await get_tree().create_timer(0.5).timeout
+	start_game()
 
-func _process(delta: float) -> void:
+func _process(delta):
 	if not game_active:
 		if Input.is_action_just_pressed("restart"):
 			restart_game()
 		return
 	
-	# Increase speed over time
-	current_speed = min(current_speed + speed_increase_per_second * delta, max_speed)
-	
-	# Move world and obstacles
-	distance_traveled += current_speed * delta
-	
-	# Update score based on distance
-	var new_score = int(distance_traveled * score_per_distance)
+	# Increment score based on time
+	game_time += delta
+	var new_score = int(game_time * score_increment_rate)
 	if new_score > current_score:
 		current_score = new_score
 		update_score_display()
 
-func start_game() -> void:
+func start_game():
 	# Reset game state
 	current_score = 0
-	distance_traveled = 0
-	current_speed = starting_speed
+	game_time = 0
 	game_active = true
+	game_over_panel.visible = false
 	
-	# Hide game over panel
-	gameover_panel.visible = false
-	
-	# Reset player position
-	player.global_position = Vector2(160, 700)
+	# Reset player
 	player.reset()
 	
 	# Start obstacle spawning
-	obstacle_spawner.set_spawn_speed(current_speed)
-	obstacle_spawner.start()
+	obstacle_manager.start()
 	
 	# Update UI
 	update_score_display()
+	update_high_score_display()
 
-func restart_game() -> void:
-	# Simply call start_game to restart
+func restart_game():
 	start_game()
 
-func _on_player_hit() -> void:
-	# Player was hit by obstacle - game over
+func _on_player_hit():
+	# Player hit an obstacle - game over
 	game_active = false
-	obstacle_spawner.stop()
+	obstacle_manager.stop()
 	
 	# Check for high score
 	if current_score > high_score:
 		high_score = current_score
 		save_high_score()
-		update_high_score_display()
 	
-	# Show game over panel with final score
-	gameover_panel.visible = true
+	# Update UI
+	update_high_score_display()
+	game_over_panel.visible = true
 	$UI/GameOverPanel/ScoreLabel.text = "Score: " + str(current_score)
-	
-	# Emit game over signal
-	emit_signal("game_over", current_score)
 
-func update_score_display() -> void:
-	score_label.text = "Score: %d" % current_score
+func update_score_display():
+	score_label.text = "Score: " + str(current_score)
 
-func update_high_score_display() -> void:
-	high_score_label.text = "High Score: %d" % high_score
+func update_high_score_display():
+	high_score_label.text = "High Score: " + str(high_score)
 
-func save_high_score() -> void:
-	var save_data = {
-		"high_score": high_score
-	}
-	
+func save_high_score():
+	var save_data = {"high_score": high_score}
 	var file = FileAccess.open(SAVE_FILE_PATH, FileAccess.WRITE)
 	if file:
 		file.store_var(save_data)
 		file.close()
 
-func load_high_score() -> void:
+func load_high_score():
 	if FileAccess.file_exists(SAVE_FILE_PATH):
 		var file = FileAccess.open(SAVE_FILE_PATH, FileAccess.READ)
 		if file:
 			var save_data = file.get_var()
 			file.close()
-			
 			if save_data and save_data.has("high_score"):
 				high_score = save_data.high_score
+	
+	update_high_score_display()
 
-# Control signal handlers
-func _on_move_left_pressed() -> void:
+# Touch control handler functions
+func _on_left_button_pressed():
 	player.move_left()
 
-func _on_move_left_released() -> void:
-	player.stop_horizontal()
-
-func _on_move_right_pressed() -> void:
+func _on_right_button_pressed():
 	player.move_right()
 
-func _on_move_right_released() -> void:
-	player.stop_horizontal()
-
-func _on_jump_pressed() -> void:
+func _on_jump_button_pressed():
 	player.try_jump()
