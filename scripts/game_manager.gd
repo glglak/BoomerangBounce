@@ -26,10 +26,9 @@ const SAVE_FILE_PATH = "user://highscore.save"
 @onready var obstacle_spawner: ObstacleManager = $ObstacleManager
 @onready var score_label: Label = $UI/ScoreLabel
 @onready var high_score_label: Label = $UI/HighScoreLabel
-@onready var countdown_label: Label = $UI/CountdownLabel
 @onready var controls: ControlsManager = $Controls
-@onready var world: Node2D = $World
-@onready var parallax_background: ParallaxBackground = $ParallaxBackground
+@onready var restart_button: Button = $UI/RestartButton
+@onready var gameover_panel: Panel = $UI/GameOverPanel
 
 func _ready() -> void:
 	# Load high score
@@ -45,12 +44,18 @@ func _ready() -> void:
 	controls.connect("move_right_released", _on_move_right_released)
 	controls.connect("jump_pressed", _on_jump_pressed)
 	
+	# Connect restart button
+	restart_button.connect("pressed", restart_game)
+	
 	# Setup input mappings
 	_setup_input_actions()
 	
 	# Update UI
 	update_score_display()
 	update_high_score_display()
+	
+	# Hide game over panel at start
+	gameover_panel.visible = false
 	
 	# Automatically start after a short delay
 	await get_tree().create_timer(0.5).timeout
@@ -91,9 +96,17 @@ func _setup_input_actions() -> void:
 		var up_key = InputEventKey.new()
 		up_key.keycode = KEY_UP
 		InputMap.action_add_event("jump", up_key)
+		
+	if not InputMap.has_action("restart"):
+		InputMap.add_action("restart")
+		var r_key = InputEventKey.new()
+		r_key.keycode = KEY_R
+		InputMap.action_add_event("restart", r_key)
 
 func _process(delta: float) -> void:
 	if not game_active:
+		if Input.is_action_just_pressed("restart"):
+			restart_game()
 		return
 	
 	# Increase speed over time
@@ -107,9 +120,6 @@ func _process(delta: float) -> void:
 	if new_score > current_score:
 		current_score = new_score
 		update_score_display()
-	
-	# Move parallax background
-	parallax_background.scroll_offset.x -= current_speed * delta
 
 func start_game() -> void:
 	# Reset game state
@@ -117,6 +127,9 @@ func start_game() -> void:
 	distance_traveled = 0
 	current_speed = starting_speed
 	game_active = true
+	
+	# Hide game over panel
+	gameover_panel.visible = false
 	
 	# Reset player position
 	player.global_position = Vector2(160, 700)
@@ -128,25 +141,10 @@ func start_game() -> void:
 	
 	# Update UI
 	update_score_display()
-	
-	# Show countdown
-	_show_countdown()
 
-func _show_countdown() -> void:
-	countdown_label.visible = true
-	countdown_label.text = "3"
-	
-	await get_tree().create_timer(0.5).timeout
-	countdown_label.text = "2"
-	
-	await get_tree().create_timer(0.5).timeout
-	countdown_label.text = "1"
-	
-	await get_tree().create_timer(0.5).timeout
-	countdown_label.text = "GO!"
-	
-	await get_tree().create_timer(0.5).timeout
-	countdown_label.visible = false
+func restart_game() -> void:
+	# Simply call start_game to restart
+	start_game()
 
 func _on_player_hit() -> void:
 	# Player was hit by obstacle - game over
@@ -159,12 +157,12 @@ func _on_player_hit() -> void:
 		save_high_score()
 		update_high_score_display()
 	
+	# Show game over panel with final score
+	gameover_panel.visible = true
+	$UI/GameOverPanel/ScoreLabel.text = "Score: " + str(current_score)
+	
 	# Emit game over signal
 	emit_signal("game_over", current_score)
-	
-	# Short delay before showing game over screen
-	await get_tree().create_timer(1.0).timeout
-	get_tree().change_scene_to_file("res://scenes/GameOver.tscn")
 
 func update_score_display() -> void:
 	score_label.text = "Score: %d" % current_score
