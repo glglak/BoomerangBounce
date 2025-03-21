@@ -6,7 +6,7 @@ signal player_hit
 # Lane management
 var current_lane = 1  # 0 = left, 1 = middle, 2 = right
 var lane_positions = [100, 270, 440]  # x positions for lanes
-var lane_change_speed = 10.0
+var lane_change_speed = 500.0
 
 # Jump properties
 @export var jump_force: float = -600.0
@@ -18,6 +18,7 @@ var is_jumping = false
 var has_double_jumped = false
 var is_dead = false
 var target_x_position = lane_positions[1]  # Start in middle lane
+var floor_y_position = 800  # Y position of the floor/ground
 
 # Reference nodes
 @onready var animation_player = $AnimationPlayer
@@ -25,26 +26,29 @@ var target_x_position = lane_positions[1]  # Start in middle lane
 
 func _ready():
 	global_position.x = lane_positions[1]  # Start in middle lane
+	global_position.y = floor_y_position - 30  # Start slightly above floor to account for character height
 	animation_player.play("idle")
 
 func _physics_process(delta):
 	if is_dead:
 		return
 		
-	# Handle automatic forward movement is done implicitly in this prototype
-	# since obstacles move toward the player instead
-	
 	# Apply gravity
-	if not is_on_floor():
+	if not is_on_floor() and global_position.y < floor_y_position:
 		velocity.y += gravity * delta
 	else:
+		# Ensure player stays on floor
+		if global_position.y >= floor_y_position:
+			global_position.y = floor_y_position - 10
+			velocity.y = 0
+			
 		# Reset jump states when on floor
 		is_jumping = false
 		has_double_jumped = false
 	
 	# Handle lane movement (x position)
 	var lane_diff = target_x_position - global_position.x
-	if abs(lane_diff) > 1.0:
+	if abs(lane_diff) > 5.0:
 		velocity.x = lane_diff * lane_change_speed * delta
 	else:
 		velocity.x = 0
@@ -52,6 +56,9 @@ func _physics_process(delta):
 		
 	# Apply movement
 	move_and_slide()
+	
+	# Clamp position to stay in game area
+	global_position.y = min(global_position.y, floor_y_position)
 	
 	# Update animation based on state
 	update_animation()
@@ -79,7 +86,7 @@ func move_right():
 		target_x_position = lane_positions[current_lane]
 
 func try_jump():
-	if is_on_floor():
+	if !is_jumping or is_on_floor() or global_position.y >= floor_y_position - 20:
 		# First jump
 		velocity.y = jump_force
 		is_jumping = true
@@ -94,7 +101,7 @@ func update_animation():
 	if is_dead:
 		return
 		
-	if not is_on_floor():
+	if global_position.y < floor_y_position - 20:
 		if velocity.y < 0:
 			# Rising - show jump animation
 			if has_double_jumped and not animation_player.current_animation == "double_jump":
@@ -126,7 +133,7 @@ func reset():
 	has_double_jumped = false
 	current_lane = 1
 	target_x_position = lane_positions[current_lane]
-	global_position = Vector2(lane_positions[current_lane], 800)
+	global_position = Vector2(lane_positions[current_lane], floor_y_position - 30)
 	velocity = Vector2.ZERO
 	sprite.modulate = Color.WHITE
 	animation_player.play("idle")
