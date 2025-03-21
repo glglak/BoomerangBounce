@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="540" height="960" viewBox="0 0 540 960" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Sky -->
+  <defs>
+    <linearGradient id="skyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e67e22" />
+      <stop offset="100%" stop-color="#d35400" />
+    </linearGradient>
+  </defs>
+  <rect width="540" height="960" fill="url(#skyGradient)"/>
+  
+  <!-- Sun/Moon -->
+  <circle cx="120" cy="200" r="50" fill="#f39c12" opacity="0.9"/>
+  <circle cx="130" cy="190" r="20" fill="#f1c40f" opacity="0.5"/>
+  
+  <!-- Canyon Layers -->
+  <path d="M0 500 L50 520 L100 500 L150 530 L200 490 L250 510 L300 480 L350 500 L400 470 L450 510 L500 490 L540 520 L540 960 L0 960 Z" fill="#c0392b" opacity="0.9"/>
+  
+  <path d="M0 600 L80 580 L160 610 L240 580 L320 620 L400 590 L480 630 L540 600 L540 960 L0 960 Z" fill="#a93226" opacity="0.9"/>
+  
+  <path d="M0 700 L100 720 L200 690 L300 730 L400 700 L540 740 L540 960 L0 960 Z" fill="#922b21" opacity="0.9"/>
+  
+  <!-- Desert Plants -->
+  <path d="M80 700 L75 660 L70 700 L65 650 L60 700" stroke="#7d3c98" stroke-width="2" fill="none"/>
+  <path d="M400 720 L395 680 L390 720 L385 670 L380 720" stroke="#7d3c98" stroke-width="2" fill="none"/>
+  
+  <!-- Flying Objects -->
+  <ellipse cx="350" cy="300" rx="15" ry="5" fill="#34495e" opacity="0.7"/>
+</svg>

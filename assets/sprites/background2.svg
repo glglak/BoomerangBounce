@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="540" height="960" viewBox="0 0 540 960" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Sky -->
+  <rect width="540" height="960" fill="#66a63d"/>
+  
+  <!-- Far Hills -->
+  <path d="M0 600 L60 550 L120 580 L180 530 L240 560 L300 520 L360 570 L420 540 L480 580 L540 550 L540 960 L0 960 Z" fill="#2c8c3c" opacity="0.6"/>
+  
+  <!-- Mid Hills -->
+  <path d="M0 680 L80 650 L160 670 L240 640 L320 680 L400 650 L480 680 L540 660 L540 960 L0 960 Z" fill="#256632" opacity="0.7"/>
+  
+  <!-- Near Hills -->
+  <path d="M0 740 L100 720 L200 750 L300 730 L400 760 L540 740 L540 960 L0 960 Z" fill="#1e5028" opacity="0.8"/>
+  
+  <!-- Trees/Bushes -->
+  <circle cx="80" cy="720" r="20" fill="#1a3c1e"/>
+  <circle cx="120" cy="710" r="15" fill="#1a3c1e"/>
+  <circle cx="200" cy="730" r="25" fill="#1a3c1e"/>
+  <circle cx="350" cy="720" r="20" fill="#1a3c1e"/>
+  <circle cx="480" cy="740" r="30" fill="#1a3c1e"/>
+  
+  <!-- Birds -->
+  <path d="M120 200 C130 195, 140 205, 150 200" stroke="#333" stroke-width="2" fill="none"/>
+  <path d="M320 150 C330 145, 340 155, 350 150" stroke="#333" stroke-width="2" fill="none"/>
+  <path d="M420 250 C430 245, 440 255, 450 250" stroke="#333" stroke-width="2" fill="none"/>
+</svg>

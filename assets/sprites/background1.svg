@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="540" height="960" viewBox="0 0 540 960" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Sky -->
+  <rect width="540" height="960" fill="#3498db"/>
+  
+  <!-- Far Mountains -->
+  <path d="M0 600 L100 400 L200 550 L300 350 L400 500 L540 450 L540 960 L0 960 Z" fill="#34495e" opacity="0.6"/>
+  
+  <!-- Mid Mountains -->
+  <path d="M0 650 L120 500 L200 600 L300 450 L420 580 L540 500 L540 960 L0 960 Z" fill="#2c3e50" opacity="0.7"/>
+  
+  <!-- Near Mountains -->
+  <path d="M0 700 L80 600 L160 660 L240 580 L320 650 L400 600 L480 650 L540 620 L540 960 L0 960 Z" fill="#1e2b38" opacity="0.8"/>
+  
+  <!-- Stars/Particles -->
+  <circle cx="100" cy="100" r="2" fill="white" opacity="0.8"/>
+  <circle cx="200" cy="200" r="1.5" fill="white" opacity="0.7"/>
+  <circle cx="300" cy="150" r="2" fill="white" opacity="0.9"/>
+  <circle cx="450" cy="250" r="1" fill="white" opacity="0.6"/>
+  <circle cx="350" cy="50" r="1.5" fill="white" opacity="0.8"/>
+  <circle cx="120" cy="300" r="1" fill="white" opacity="0.7"/>
+  <circle cx="400" cy="100" r="2" fill="white" opacity="0.8"/>
+</svg>
