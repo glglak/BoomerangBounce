@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format="3"]
+[gd_scene load_steps=8 format="3"]
 
 [ext_resource type="Script" path="res://scripts/game_manager.gd" id="1_6l7x2"]
 [ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="2_d3qdv"]
@@ -6,6 +6,9 @@
 [ext_resource type="PackedScene" path="res://scenes/Obstacle.tscn" id="5_j7gyw"]
 [ext_resource type="PackedScene" path="res://scenes/GroundObstacle.tscn" id="5_3pgr4"]
 [ext_resource type="PackedScene" path="res://scenes/AirObstacle.tscn" id="6_1e8s6"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_h1f7c"]
+size = Vector2(600, 30)
 
 [node name="Game" type="Node"]
 script = ExtResource("1_6l7x2")
@@ -23,19 +26,29 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -100.0
+offset_top = -160.0
 grow_horizontal = 2
 grow_vertical = 0
 color = Color(0.15, 0.15, 0.15, 1.0)
 
+[node name="GroundCollision" type="StaticBody2D" parent="."]
+position = Vector2(270, 800)
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="GroundCollision"]
+shape = SubResource("RectangleShape2D_h1f7c")
+
 [node name="Player" parent="." instance=ExtResource("2_d3qdv")]
-position = Vector2(100, 800)
+position = Vector2(100, 770)
 
 [node name="ObstacleManager" type="Node2D" parent="."]
 script = ExtResource("4_bvxuo")
 obstacle_scene = ExtResource("5_j7gyw")
 ground_obstacle_scene = ExtResource("5_3pgr4")
 air_obstacle_scene = ExtResource("6_1e8s6")
+min_spawn_interval = 1.5
+max_spawn_interval = 3.0
+initial_obstacle_speed = 200.0
 
 [node name="UI" type="Control" parent="."]
 layout_mode = 3
@@ -95,13 +108,13 @@ theme_override_font_sizes/font_size = 16
 text = "Restart"
 
 [node name="Lane1Marker" type="Marker2D" parent="."]
-position = Vector2(100, 800)
+position = Vector2(100, 770)
 
 [node name="Lane2Marker" type="Marker2D" parent="."]
-position = Vector2(270, 800)
+position = Vector2(270, 770)
 
 [node name="Lane3Marker" type="Marker2D" parent="."]
-position = Vector2(440, 800)
+position = Vector2(440, 770)
 
 [node name="GameOverPanel" type="Panel" parent="UI"]
 visible = false
@@ -214,3 +227,35 @@ offset_bottom = -20.0
 grow_horizontal = 2
 grow_vertical = 0
 text = "Jump"
+
+[node name="LaneVisuals" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Lane1" type="ColorRect" parent="LaneVisuals"]
+layout_mode = 0
+offset_left = 90.0
+offset_top = 800.0
+offset_right = 110.0
+offset_bottom = 810.0
+color = Color(0.8, 0.8, 0.8, 0.5)
+
+[node name="Lane2" type="ColorRect" parent="LaneVisuals"]
+layout_mode = 0
+offset_left = 260.0
+offset_top = 800.0
+offset_right = 280.0
+offset_bottom = 810.0
+color = Color(0.8, 0.8, 0.8, 0.5)
+
+[node name="Lane3" type="ColorRect" parent="LaneVisuals"]
+layout_mode = 0
+offset_left = 430.0
+offset_top = 800.0
+offset_right = 450.0
+offset_bottom = 810.0
+color = Color(0.8, 0.8, 0.8, 0.5)
