@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+  <!-- Spiky obstacle -->
+  <polygon points="24,0 32,16 48,24 32,32 24,48 16,32 0,24 16,16" fill="#e74c3c" stroke="#c0392b" stroke-width="2"/>
+  <circle cx="24" cy="24" r="8" fill="#c0392b"/>
+  <circle cx="24" cy="24" r="4" fill="#e74c3c"/>
+</svg>
