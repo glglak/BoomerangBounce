@@ -1,11 +1,22 @@
-[gd_scene load_steps=8 format="3"]
+[gd_scene load_steps=19 format="3"]
 
 [ext_resource type="Script" path="res://scripts/game_manager.gd" id="1_6l7x2"]
-[ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="2_d3qdv"]
-[ext_resource type="Script" path="res://scripts/obstacle_manager.gd" id="4_bvxuo"]
-[ext_resource type="PackedScene" path="res://scenes/Obstacle.tscn" id="5_j7gyw"]
-[ext_resource type="PackedScene" path="res://scenes/GroundObstacle.tscn" id="5_3pgr4"]
-[ext_resource type="PackedScene" path="res://scenes/AirObstacle.tscn" id="6_1e8s6"]
+[ext_resource type="Texture2D" path="res://assets/sprites/background1.svg" id="2_mak7p"]
+[ext_resource type="Texture2D" path="res://assets/sprites/background2.svg" id="3_5whlv"]
+[ext_resource type="Texture2D" path="res://assets/sprites/background3.svg" id="4_xc7w8"]
+[ext_resource type="Texture2D" path="res://assets/sprites/background4.svg" id="5_fpxd2"]
+[ext_resource type="Texture2D" path="res://assets/sprites/background5.svg" id="6_x8kmv"]
+[ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="7_rh6mb"]
+[ext_resource type="Script" path="res://scripts/obstacle_manager.gd" id="8_r8kic"]
+[ext_resource type="PackedScene" path="res://scenes/Obstacle.tscn" id="9_cvnnp"]
+[ext_resource type="PackedScene" path="res://scenes/GroundObstacle.tscn" id="10_k2pgj"]
+[ext_resource type="PackedScene" path="res://scenes/AirObstacle.tscn" id="11_2tl64"]
+[ext_resource type="AudioStream" path="res://assets/audio/background.mp3" id="12_cde6p"]
+[ext_resource type="AudioStream" path="res://assets/audio/jump.mp3" id="13_8qsj5"]
+[ext_resource type="AudioStream" path="res://assets/audio/score.mp3" id="14_3rkqw"]
+[ext_resource type="AudioStream" path="res://assets/audio/milestone5.mp3" id="15_5sgnt"]
+[ext_resource type="AudioStream" path="res://assets/audio/wesopeso.mp3" id="16_a0yg3"]
+[ext_resource type="AudioStream" path="res://assets/audio/game-over.mp3" id="17_6aek6"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_h1f7c"]
 size = Vector2(600, 30)
@@ -15,49 +26,59 @@ script = ExtResource("1_6l7x2")
 
 [node name="Backgrounds" type="Node" parent="."]
 
-[node name="Background1" type="ColorRect" parent="Backgrounds"]
+[node name="Background1" type="TextureRect" parent="Backgrounds"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.2, 0.4, 0.6, 1.0)
+texture = ExtResource("2_mak7p")
+expand_mode = 1
+stretch_mode = 6
 
-[node name="Background2" type="ColorRect" parent="Backgrounds"]
+[node name="Background2" type="TextureRect" parent="Backgrounds"]
 visible = false
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.4, 0.6, 0.2, 1.0)
+texture = ExtResource("3_5whlv")
+expand_mode = 1
+stretch_mode = 6
 
-[node name="Background3" type="ColorRect" parent="Backgrounds"]
+[node name="Background3" type="TextureRect" parent="Backgrounds"]
 visible = false
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.6, 0.4, 0.2, 1.0)
+texture = ExtResource("4_xc7w8")
+expand_mode = 1
+stretch_mode = 6
 
-[node name="Background4" type="ColorRect" parent="Backgrounds"]
+[node name="Background4" type="TextureRect" parent="Backgrounds"]
 visible = false
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.6, 0.2, 0.4, 1.0)
+texture = ExtResource("5_fpxd2")
+expand_mode = 1
+stretch_mode = 6
 
-[node name="Background5" type="ColorRect" parent="Backgrounds"]
+[node name="Background5" type="TextureRect" parent="Backgrounds"]
 visible = false
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.2, 0.2, 0.4, 1.0)
+texture = ExtResource("6_x8kmv")
+expand_mode = 1
+stretch_mode = 6
 
 [node name="Ground" type="ColorRect" parent="."]
 anchors_preset = 12
@@ -76,14 +97,14 @@ collision_mask = 2
 [node name="CollisionShape2D" type="CollisionShape2D" parent="GroundCollision"]
 shape = SubResource("RectangleShape2D_h1f7c")
 
-[node name="Player" parent="." instance=ExtResource("2_d3qdv")]
+[node name="Player" parent="." instance=ExtResource("7_rh6mb")]
 position = Vector2(100, 770)
 
 [node name="ObstacleManager" type="Node2D" parent="."]
-script = ExtResource("4_bvxuo")
-obstacle_scene = ExtResource("5_j7gyw")
-ground_obstacle_scene = ExtResource("5_3pgr4")
-air_obstacle_scene = ExtResource("6_1e8s6")
+script = ExtResource("8_r8kic")
+obstacle_scene = ExtResource("9_cvnnp")
+ground_obstacle_scene = ExtResource("10_k2pgj")
+air_obstacle_scene = ExtResource("11_2tl64")
 min_spawn_interval = 1.5
 max_spawn_interval = 3.0
 initial_obstacle_speed = 200.0
@@ -301,22 +322,28 @@ color = Color(0.8, 0.8, 0.8, 0.5)
 [node name="Audio" type="Node" parent="."]
 
 [node name="BackgroundMusic" type="AudioStreamPlayer" parent="Audio"]
+stream = ExtResource("12_cde6p")
 volume_db = -10.0
 bus = &"Music"
 
 [node name="JumpSound" type="AudioStreamPlayer" parent="Audio"]
+stream = ExtResource("13_8qsj5")
 volume_db = -5.0
 bus = &"SFX"
 
 [node name="ScoreSound" type="AudioStreamPlayer" parent="Audio"]
+stream = ExtResource("14_3rkqw")
 volume_db = -15.0
 bus = &"SFX"
 
 [node name="MilestoneSound" type="AudioStreamPlayer" parent="Audio"]
+stream = ExtResource("15_5sgnt")
 bus = &"SFX"
 
 [node name="WesoPesoSound" type="AudioStreamPlayer" parent="Audio"]
+stream = ExtResource("16_a0yg3")
 bus = &"SFX"
 
 [node name="GameOverSound" type="AudioStreamPlayer" parent="Audio"]
+stream = ExtResource("17_6aek6")
 bus = &"SFX"
