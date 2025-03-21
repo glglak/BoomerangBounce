@@ -4,10 +4,12 @@ class_name GameManager
 # Score settings
 var current_score = 0
 var high_score = 0
-var score_increment_rate = 1  # Points per second (much slower)
 var game_active = false
 var game_time = 0.0
 var last_milestone = 0  # Track last milestone for sound effects
+
+# Platform detection variables
+var is_mobile = false
 
 # Path for saving high score
 const SAVE_FILE_PATH = "user://highscore.save"
@@ -24,6 +26,7 @@ const SAVE_FILE_PATH = "user://highscore.save"
 @onready var right_button = $Controls/RightButton
 @onready var jump_button = $Controls/JumpButton
 @onready var ground = $Ground  # Reference to the ground visual
+@onready var controls_container = $Controls  # Container for all controls
 
 # Audio references
 @onready var background_music = $Audio/BackgroundMusic
@@ -43,19 +46,27 @@ const SAVE_FILE_PATH = "user://highscore.save"
 func _ready():
 	randomize()
 	
+	# Detect if on mobile platform
+	is_mobile = OS.get_name() == "Android" or OS.get_name() == "iOS"
+	
+	# Show/hide touch controls based on platform
+	controls_container.visible = !is_mobile
+	
 	# Load high score
 	load_high_score()
 	
 	# Connect signals
 	player.connect("player_hit", Callable(self, "_on_player_hit"))
+	player.connect("jump_performed", Callable(self, "_on_player_jump"))
+	obstacle_manager.connect("obstacle_passed", Callable(self, "_on_obstacle_passed"))
 	restart_button.connect("pressed", Callable(self, "restart_game"))
 	gameover_restart_button.connect("pressed", Callable(self, "restart_game"))
 	left_button.connect("pressed", Callable(self, "_on_left_button_pressed"))
 	right_button.connect("pressed", Callable(self, "_on_right_button_pressed"))
 	jump_button.connect("pressed", Callable(self, "_on_jump_button_pressed"))
 	
-	# Player also should connect jump signal for sound
-	player.connect("jump_performed", Callable(self, "_on_player_jump"))
+	# Pass player reference to obstacle manager
+	obstacle_manager.set_player_reference(player)
 	
 	# Setup input mapping for restarting
 	if not InputMap.has_action("restart"):
@@ -78,25 +89,44 @@ func _process(delta):
 			restart_game()
 		return
 	
-	# Increment score based on time, but much more slowly
+	# Update game time (used for difficulty scaling)
 	game_time += delta
 	
-	# Score increments faster as game progresses (to reward survival)
-	var difficulty_factor = min(game_time / 60.0, 1.0)
-	var current_score_rate = score_increment_rate + (difficulty_factor * 2)
+	# Handle touch input on mobile
+	if is_mobile:
+		_handle_touch_input()
+
+func _handle_touch_input():
+	# Process touch input for mobile
+	if Input.is_action_just_pressed("ui_touch"):
+		var touch_position = get_viewport().get_mouse_position()
+		var screen_width = get_viewport().get_visible_rect().size.x
+		
+		# Determine action based on touch position
+		if touch_position.y < get_viewport().get_visible_rect().size.y * 0.8:
+			# Jump if touching the upper part of the screen
+			player.try_jump()
+		else:
+			# Left/right movement based on which half of the screen was touched
+			if touch_position.x < screen_width / 2:
+				player.move_left()
+			else:
+				player.move_right()
+
+func _on_obstacle_passed():
+	# Increment score when an obstacle is passed
+	current_score += 1
 	
-	var new_score = int(game_time * current_score_rate) + int(game_time / 5)
-	if new_score > current_score:
-		# Play score sound
-		if score_sound:
-			score_sound.play()
-			
-		# Check for milestone
-		if int(new_score / 10) > int(current_score / 10):
-			_handle_milestone(new_score)
-			
-		current_score = new_score
-		update_score_display()
+	# Play score sound
+	if score_sound:
+		score_sound.play()
+	
+	# Check for milestone
+	if int(current_score / 10) > int(last_milestone / 10):
+		_handle_milestone(current_score)
+	
+	# Update display
+	update_score_display()
 
 func start_game():
 	# Reset game state
