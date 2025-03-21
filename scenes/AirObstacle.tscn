@@ -1,20 +1,20 @@
 [gd_scene load_steps=4 format="3"]
 
-[ext_resource type="Script" path="res://scripts/obstacle.gd" id="1_ncpnp"]
-[ext_resource type="Texture2D" path="res://assets/sprites/obstacle.svg" id="2_hocey"]
+[ext_resource type="Script" path="res://scripts/obstacle.gd" id="1_0xgir"]
+[ext_resource type="Texture2D" path="res://assets/sprites/obstacle.svg" id="2_o0txs"]
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_8j15f"]
-radius = 24.0
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_k82o5"]
+size = Vector2(20, 64)
 
 [node name="AirObstacle" type="Area2D"]
 collision_layer = 4
 collision_mask = 2
-script = ExtResource("1_ncpnp")
-obstacle_type = "air"
+script = ExtResource("1_0xgir")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-modulate = Color(0.4, 0.4, 1, 1)
-texture = ExtResource("2_hocey")
+modulate = Color(0.2, 0.4, 0.8, 1)
+scale = Vector2(0.3, 0.8)
+texture = ExtResource("2_o0txs")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-shape = SubResource("CircleShape2D_8j15f")
+shape = SubResource("RectangleShape2D_k82o5")
