@@ -4,7 +4,7 @@ class_name GameManager
 # Score settings
 var current_score = 0
 var high_score = 0
-var score_increment_rate = 10  # Points per second
+var score_increment_rate = 1  # Points per second (much slower)
 var game_active = false
 var game_time = 0.0
 
@@ -22,6 +22,7 @@ const SAVE_FILE_PATH = "user://highscore.save"
 @onready var left_button = $Controls/LeftButton
 @onready var right_button = $Controls/RightButton
 @onready var jump_button = $Controls/JumpButton
+@onready var ground = $Ground  # Reference to the ground visual
 
 func _ready():
 	randomize()
@@ -55,9 +56,14 @@ func _process(delta):
 			restart_game()
 		return
 	
-	# Increment score based on time
+	# Increment score based on time, but much more slowly
 	game_time += delta
-	var new_score = int(game_time * score_increment_rate)
+	
+	# Score increments faster as game progresses (to reward survival)
+	var difficulty_factor = min(game_time / 60.0, 1.0)
+	var current_score_rate = score_increment_rate + (difficulty_factor * 2)
+	
+	var new_score = int(game_time * current_score_rate) + int(game_time / 5)
 	if new_score > current_score:
 		current_score = new_score
 		update_score_display()
