@@ -25,6 +25,15 @@ window/stretch/mode="canvas_items"
 window/stretch/aspect="keep_height"
 window/handheld/orientation="portrait"
 
+[input]
+
+jump={
+"deadzone": 0.5,
+"events": [Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":0,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"button_mask":1,"position":Vector2(250, 250),"global_position":Vector2(250, 250),"factor":1.0,"button_index":1,"canceled":false,"pressed":true,"double_click":false,"script":null)
+, Object(InputEventScreenTouch,"resource_local_to_scene":false,"resource_name":"","device":0,"window_id":0,"index":0,"position":Vector2(0, 0),"canceled":false,"pressed":true,"double_tap":false,"script":null)
+]
+}
+
 [input_devices]
 
 pointing/emulate_touch_from_mouse=true
@@ -39,12 +48,3 @@ quality/driver/driver_name="GLES2"
 vram_compression/import_etc=true
 vram_compression/import_etc2=false
 environment/default_environment="res://default_env.tres"
-
-[input]
-
-jump={
-"deadzone": 0.5,
-"events": [Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":0,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"button_mask":1,"position":Vector2(250, 250),"global_position":Vector2(250, 250),"factor":1.0,"button_index":1,"canceled":false,"pressed":true,"double_click":false,"script":null)
-, Object(InputEventScreenTouch,"resource_local_to_scene":false,"resource_name":"","device":0,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":true,"position":Vector2(0, 0),"global_position":Vector2(0, 0),"index":0,"canceled":false,"script":null)
-]
-}
