@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format="3"]
 
-[ext_resource type="Script" path="res://scripts/main_menu.gd" id="1_xv6h7"]
+[ext_resource type="Script" path="res://scripts/main_menu.gd" id="1_qgalp"]
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -9,7 +9,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_xv6h7")
+script = ExtResource("1_qgalp")
 
 [node name="Background" type="ColorRect" parent="."]
 layout_mode = 1
@@ -18,20 +18,23 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.14902, 0.164706, 0.231373, 1)
+color = Color(0.160784, 0.176471, 0.341176, 1)
 
 [node name="TitleLabel" type="Label" parent="."]
 layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -200.0
 offset_top = 150.0
+offset_right = 200.0
 offset_bottom = 250.0
 grow_horizontal = 2
 theme_override_font_sizes/font_size = 48
 text = "Boomerang Bounce"
 horizontal_alignment = 1
 
-[node name="PlayButton" type="Button" parent="."]
+[node name="HighScoreLabel" type="Label" parent="."]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -44,22 +47,38 @@ offset_right = 100.0
 offset_bottom = 25.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_font_sizes/font_size = 32
-text = "Play"
-
-[node name="HighScoreLabel" type="Label" parent="."]
-layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -100.0
-offset_top = -150.0
-offset_right = 100.0
-offset_bottom = -120.0
-grow_horizontal = 2
-grow_vertical = 0
 theme_override_font_sizes/font_size = 24
 text = "High Score: 0"
 horizontal_alignment = 1
+
+[node name="PlayButton" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -100.0
+offset_top = 50.0
+offset_right = 100.0
+offset_bottom = 100.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 28
+text = "Play"
+
+[node name="QuitButton" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -100.0
+offset_top = 120.0
+offset_right = 100.0
+offset_bottom = 170.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 24
+text = "Quit"
