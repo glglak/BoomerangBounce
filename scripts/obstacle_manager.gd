@@ -1,100 +1,137 @@
 extends Node2D
 class_name ObstacleManager
 
-# Obstacle patterns and settings
-@export var obstacle_scene: PackedScene
-@export var min_obstacle_distance: float = 500.0
-@export var max_obstacle_distance: float = 1000.0
-@export var min_speed: float = 300.0
-@export var max_speed: float = 600.0
-@export var speed_increase_rate: float = 10.0  # Units per second
+# Obstacle prefabs
+@export var obstacle_scenes: Array[PackedScene] = []
+@export var ground_obstacle_scene: PackedScene
+@export var air_obstacle_scene: PackedScene
+@export var full_obstacle_scene: PackedScene
+
+# Spawning parameters
+@export var spawn_ahead_distance: float = 1200.0  # Distance ahead to spawn obstacles
+@export var min_obstacle_spacing: float = 600.0   # Minimum distance between obstacles
+@export var max_obstacle_spacing: float = 1200.0  # Maximum distance between obstacles
+@export var lane_width: float = 160.0             # Width of each lane
+@export var num_lanes: int = 3                    # Number of lanes
+
+# Obstacle properties
+@export var obstacle_lifetime: float = 10.0       # Seconds before automatically removing obstacles
+@export var obstacle_move_speed: float = 300.0    # Initial speed of obstacles
+@export var speed_increase_rate: float = 10.0     # How much to increase speed over time
+@export var difficulty_ramp_time: float = 30.0    # Seconds until reaching maximum difficulty
 
 # Internal variables
-var active_obstacles = []
-var current_speed: float = 300.0
-var screen_width: float
-var obstacle_spawn_x: float
-var last_obstacle_x: float = 0
-var next_obstacle_distance: float = 0
-
-# Game state
-var score: int = 0
-var game_active: bool = false
+var active_obstacles: Array = []
+var spawn_position: float = 0.0
+var spawn_timer: float = 0.0
+var next_spawn_distance: float = 0.0
+var current_speed: float = 0.0
+var is_active: bool = false
+var game_time: float = 0.0
 
 func _ready() -> void:
-	# Get screen dimensions
-	screen_width = get_viewport_rect().size.x
-	obstacle_spawn_x = screen_width + 100  # Start off-screen
-	
-	randomize()  # Initialize random number generator
+	# Initialize with default obstacle if none specified
+	if obstacle_scenes.is_empty() and ground_obstacle_scene == null and air_obstacle_scene == null:
+		printerr("Warning: No obstacle scenes assigned to ObstacleManager")
 
 func _process(delta: float) -> void:
-	if not game_active:
+	if not is_active:
 		return
 	
-	# Increase speed over time
-	current_speed = min(current_speed + speed_increase_rate * delta, max_speed)
+	# Increase game time and update difficulty
+	game_time += delta
+	var difficulty_progress = min(game_time / difficulty_ramp_time, 1.0)
 	
-	# Check if we need to spawn a new obstacle
-	if obstacle_spawn_x - last_obstacle_x >= next_obstacle_distance:
-		spawn_obstacle()
-	
-	# Move and manage active obstacles
+	# Move and update obstacles
 	var obstacles_to_remove = []
-	
 	for obstacle in active_obstacles:
-		# Move obstacle to the left
+		# Move obstacle leftward
 		obstacle.position.x -= current_speed * delta
 		
-		# Check if obstacle is off-screen to the left
-		if obstacle.position.x < -100:
+		# Check if obstacle is off-screen and should be removed
+		if obstacle.position.x < -200:
 			obstacles_to_remove.append(obstacle)
-			score += 1
 	
-	# Remove obstacles that have passed
+	# Remove obstacles that are no longer needed
 	for obstacle in obstacles_to_remove:
 		active_obstacles.erase(obstacle)
 		obstacle.queue_free()
 	
-	# Update score
-	if obstacles_to_remove.size() > 0:
-		emit_signal("score_updated", score)
+	# Check if it's time to spawn a new obstacle
+	spawn_position -= current_speed * delta
+	if spawn_position <= spawn_ahead_distance:
+		spawn_obstacle()
 
 func start() -> void:
-	score = 0
-	current_speed = min_speed
-	game_active = true
-	next_obstacle_distance = get_random_distance()
-	last_obstacle_x = obstacle_spawn_x - next_obstacle_distance  # To spawn first obstacle immediately
+	# Reset internal state
+	is_active = true
+	game_time = 0.0
 	
 	# Clear any existing obstacles
 	for obstacle in active_obstacles:
 		obstacle.queue_free()
 	active_obstacles.clear()
+	
+	# Initialize spawn position
+	spawn_position = spawn_ahead_distance + min_obstacle_spacing
+	
+	# Set initial speed
+	current_speed = obstacle_move_speed
 
 func stop() -> void:
-	game_active = false
+	is_active = false
+
+func set_spawn_speed(speed: float) -> void:
+	current_speed = speed
+	obstacle_move_speed = speed
 
 func spawn_obstacle() -> void:
-	# Create new obstacle instance
+	if not is_active:
+		return
+	
+	var obstacle_scene: PackedScene
+	var obstacle_type = randi() % 3  # 0 = ground, 1 = air, 2 = full
+	
+	# Select obstacle by type
+	if obstacle_type == 0 and ground_obstacle_scene:
+		obstacle_scene = ground_obstacle_scene
+	elif obstacle_type == 1 and air_obstacle_scene:
+		obstacle_scene = air_obstacle_scene
+	elif obstacle_type == 2 and full_obstacle_scene:
+		obstacle_scene = full_obstacle_scene
+	elif not obstacle_scenes.is_empty():
+		# Fall back to random from array if specific scenes not set
+		obstacle_scene = obstacle_scenes[randi() % obstacle_scenes.size()]
+	else:
+		# No obstacle scenes available
+		return
+	
+	# Create the obstacle
 	var obstacle = obstacle_scene.instantiate()
 	add_child(obstacle)
 	
-	# Position obstacle off-screen to the right
-	obstacle.position.x = obstacle_spawn_x
-	obstacle.position.y = get_random_y_position()
+	# Position based on type
+	var lane_position = randi() % num_lanes
+	var lane_x = (lane_position - (num_lanes-1)/2.0) * lane_width + (lane_width / 2)
 	
-	# Add to active obstacles list
+	obstacle.position.x = spawn_ahead_distance
+	
+	if obstacle_type == 0:  # Ground obstacle
+		obstacle.position.y = 850  # Ground level
+	elif obstacle_type == 1:  # Air obstacle
+		obstacle.position.y = 750  # Elevated to require jumping
+	else:  # Full obstacle (requires specific lane)
+		obstacle.position.y = 800
+		obstacle.position.x = lane_x
+	
+	# Add to active obstacles
 	active_obstacles.append(obstacle)
 	
-	# Update last obstacle position and generate next distance
-	last_obstacle_x = obstacle_spawn_x
-	next_obstacle_distance = get_random_distance()
-
-func get_random_distance() -> float:
-	return randf_range(min_obstacle_distance, max_obstacle_distance)
-
-func get_random_y_position() -> float:
-	# This will be based on your game's specific layout
-	# For now, we'll assume a fixed ground height and obstacles on the ground
-	return 800  # Example ground position
+	# Calculate next spawn position
+	var spacing = randf_range(min_obstacle_spacing, max_obstacle_spacing)
+	spawn_position += spacing
+	
+	# Update difficulty based on game time
+	var difficulty_progress = min(game_time / difficulty_ramp_time, 1.0)
+	min_obstacle_spacing = lerp(600.0, 400.0, difficulty_progress)
+	max_obstacle_spacing = lerp(1200.0, 800.0, difficulty_progress)
