@@ -1,14 +1,8 @@
-[gd_scene load_steps=8 format="3"]
+[gd_scene load_steps=6 format="3"]
 
 [ext_resource type="Script" path="res://scripts/game_manager.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/player.gd" id="2"]
-[ext_resource type="Script" path="res://scripts/boomerang.gd" id="3"]
-
-[sub_resource type="RectangleShape2D" id="1"]
-size = Vector2(50, 50)
-
-[sub_resource type="RectangleShape2D" id="2"]
-size = Vector2(40, 40)
+[ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://scenes/Boomerang.tscn" id="3"]
 
 [sub_resource type="RectangleShape2D" id="3"]
 size = Vector2(540, 20)
@@ -52,29 +46,11 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.176471, 0.211765, 0.301961, 1)
 
-[node name="Player" type="CharacterBody2D" parent="."]
+[node name="Player" parent="." instance=ExtResource("2")]
 position = Vector2(270, 860)
-script = ExtResource("2")
-metadata/_edit_group_ = true
 
-[node name="Sprite2D" type="Sprite2D" parent="Player"]
-modulate = Color(0.227451, 0.8, 0.47451, 1)
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Player"]
-shape = SubResource("1")
-
-[node name="AnimationPlayer" type="AnimationPlayer" parent="Player"]
-
-[node name="Boomerang" type="Area2D" parent="."]
+[node name="Boomerang" parent="." instance=ExtResource("3")]
 position = Vector2(60, 860)
-script = ExtResource("3")
-metadata/_edit_group_ = true
-
-[node name="Sprite2D" type="Sprite2D" parent="Boomerang"]
-modulate = Color(0.858824, 0.25098, 0.25098, 1)
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Boomerang"]
-shape = SubResource("2")
 
 [node name="Ground" type="StaticBody2D" parent="."]
 position = Vector2(270, 900)
