@@ -1,13 +1,13 @@
-[gd_scene load_steps=7 format="3"]
+[gd_scene load_steps=7 format="3 uid://cwtgkv6hjg56o"]
 
-[ext_resource type="Script" path="res://scripts/game_manager.gd" id="1"]
-[ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="2"]
-[ext_resource type="PackedScene" path="res://scenes/Boomerang.tscn" id="3"]
+[ext_resource type="Script" path="res://scripts/game_manager.gd" id="1_6l7x2"]
+[ext_resource type="PackedScene" uid="uid://buwpbhgddnkfm" path="res://scenes/Player.tscn" id="2_d3qdv"]
+[ext_resource type="PackedScene" uid="uid://cs6fq1p0axhnj" path="res://scenes/Boomerang.tscn" id="3_akmj3"]
 
-[sub_resource type="RectangleShape2D" id="3"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_u70hq"]
 size = Vector2(540, 20)
 
-[sub_resource type="Animation" id="4"]
+[sub_resource type="Animation" id="Animation_uvt4p"]
 resource_name = "game_start"
 length = 1.0
 tracks/0/type = "value"
@@ -35,13 +35,13 @@ tracks/1/keys = {
 "values": [true, false]
 }
 
-[sub_resource type="AnimationLibrary" id="AnimationLibrary"]
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_cna2s"]
 _data = {
-"game_start": SubResource("4")
+"game_start": SubResource("Animation_uvt4p")
 }
 
 [node name="Game" type="Node"]
-script = ExtResource("1")
+script = ExtResource("1_6l7x2")
 
 [node name="Background" type="ColorRect" parent="."]
 anchors_preset = 15
@@ -51,10 +51,10 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.176471, 0.211765, 0.301961, 1)
 
-[node name="Player" parent="." instance=ExtResource("2")]
+[node name="Player" parent="." instance=ExtResource("2_d3qdv")]
 position = Vector2(270, 860)
 
-[node name="Boomerang" parent="." instance=ExtResource("3")]
+[node name="Boomerang" parent="." instance=ExtResource("3_akmj3")]
 position = Vector2(60, 860)
 
 [node name="Ground" type="StaticBody2D" parent="."]
@@ -62,7 +62,7 @@ position = Vector2(270, 900)
 metadata/_edit_group_ = true
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Ground"]
-shape = SubResource("3")
+shape = SubResource("RectangleShape2D_u70hq")
 
 [node name="ColorRect" type="ColorRect" parent="Ground"]
 anchors_preset = 8
@@ -143,7 +143,7 @@ one_shot = true
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 libraries = {
-"": SubResource("AnimationLibrary")
+"": SubResource("AnimationLibrary_cna2s")
 }
 
 [connection signal="timeout" from="CountdownTimer" to="." method="_on_countdown_timer_timeout"]
