@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="540" height="960" viewBox="0 0 540 960">
+  <!-- Sky gradient -->
+  <defs>
+    <linearGradient id="skyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3498db" />
+      <stop offset="100%" stop-color="#8e44ad" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="540" height="960" fill="url(#skyGradient)" />
+  
+  <!-- Stars -->
+  <circle cx="50" cy="80" r="2" fill="white" opacity="0.8" />
+  <circle cx="120" cy="40" r="1.5" fill="white" opacity="0.7" />
+  <circle cx="200" cy="120" r="2" fill="white" opacity="0.9" />
+  <circle cx="280" cy="60" r="1.8" fill="white" opacity="0.8" />
+  <circle cx="350" cy="140" r="2.2" fill="white" opacity="0.7" />
+  <circle cx="420" cy="90" r="1.7" fill="white" opacity="0.9" />
+  <circle cx="500" cy="30" r="2.1" fill="white" opacity="0.8" />
+  
+  <!-- Distant mountains -->
+  <polygon points="0,400 100,320 150,360 200,300 300,380 400,280 450,340 540,320 540,960 0,960" fill="#34495e" opacity="0.6" />
+  
+  <!-- Middle mountains -->
+  <polygon points="0,450 60,400 120,440 180,380 240,420 300,360 360,440 420,380 480,420 540,390 540,960 0,960" fill="#2c3e50" opacity="0.7" />
+  
+  <!-- Foreground mountains -->
+  <polygon points="0,500 40,460 80,480 120,440 160,470 200,430 240,480 280,440 320,470 360,430 400,450 440,410 480,460 520,420 540,440 540,960 0,960" fill="#1e2b38" opacity="0.8" />
+</svg>
