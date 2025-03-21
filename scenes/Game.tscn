@@ -13,13 +13,51 @@ size = Vector2(600, 30)
 [node name="Game" type="Node"]
 script = ExtResource("1_6l7x2")
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="Backgrounds" type="Node" parent="."]
+
+[node name="Background1" type="ColorRect" parent="Backgrounds"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.2, 0.4, 0.6, 1.0)
+
+[node name="Background2" type="ColorRect" parent="Backgrounds"]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.4, 0.6, 0.2, 1.0)
+
+[node name="Background3" type="ColorRect" parent="Backgrounds"]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.6, 0.4, 0.2, 1.0)
+
+[node name="Background4" type="ColorRect" parent="Backgrounds"]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.6, 0.2, 0.4, 1.0)
+
+[node name="Background5" type="ColorRect" parent="Backgrounds"]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.2, 0.2, 0.4, 1.0)
 
 [node name="Ground" type="ColorRect" parent="."]
 anchors_preset = 12
@@ -259,3 +297,26 @@ offset_top = 800.0
 offset_right = 450.0
 offset_bottom = 810.0
 color = Color(0.8, 0.8, 0.8, 0.5)
+
+[node name="Audio" type="Node" parent="."]
+
+[node name="BackgroundMusic" type="AudioStreamPlayer" parent="Audio"]
+volume_db = -10.0
+bus = &"Music"
+
+[node name="JumpSound" type="AudioStreamPlayer" parent="Audio"]
+volume_db = -5.0
+bus = &"SFX"
+
+[node name="ScoreSound" type="AudioStreamPlayer" parent="Audio"]
+volume_db = -15.0
+bus = &"SFX"
+
+[node name="MilestoneSound" type="AudioStreamPlayer" parent="Audio"]
+bus = &"SFX"
+
+[node name="WesoPesoSound" type="AudioStreamPlayer" parent="Audio"]
+bus = &"SFX"
+
+[node name="GameOverSound" type="AudioStreamPlayer" parent="Audio"]
+bus = &"SFX"
