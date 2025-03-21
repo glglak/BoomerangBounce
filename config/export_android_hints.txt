@@ -1,0 +1,67 @@
+# Export Configuration for Android API Level 34+
+
+This file contains instructions for setting up Android export presets in Godot 4.2+.
+These settings are managed through the Godot editor and not directly in the filesystem.
+
+## Steps to Create Android Export Preset
+
+1. Open the Godot Editor
+2. Go to Project > Export
+3. Click "Add..." and select "Android"
+4. Configure the following settings:
+
+### General Settings
+- Application
+  - Name: Boomerang Bounce
+  - Package Identifier: com.yourdomain.boomerangbounce
+  - Version Code: 1
+  - Version Name: 1.0
+  - Target SDK: 34
+  - Min SDK: 21
+  - Install Location: Auto
+
+### Android App Signing
+- Release Keystore Path: [Path to your keystore]
+- Release Key Alias: [Your key alias]
+- Release Key Password: [Your key password]
+- Release Keystore Password: [Your keystore password]
+
+### Graphics
+- XR Mode: None
+- Screen Orientation: Portrait
+- Immersive Mode: Enabled
+
+### Permissions
+- Required permissions:
+  - Access Network State
+  - Internet
+  - Vibrate (if haptic feedback is needed)
+
+## Creating a Keystore for Signing
+
+To create a keystore with the keytool utility:
+
+```bash
+keytool -genkey -v -keystore boomerang_bounce.keystore -alias boomerang_bounce -keyalg RSA -keysize 2048 -validity 10000
+```
+
+## Building AAB for Google Play
+
+To build an Android App Bundle (AAB):
+
+1. Select your Android export preset
+2. Check "Export Project" rather than "Export PCK/ZIP"
+3. Enable "Use Gradle Build" option
+4. Select AAB as the Export Format
+5. Click "Export"
+
+## Testing Your AAB
+
+You can test your AAB using the Android App Bundle CLI tool, which is available with Android SDK Build Tools:
+
+```bash
+bundletool build-apks --bundle=path/to/your/app.aab --output=path/to/your/app.apks
+bundletool install-apks --apks=path/to/your/app.apks
+```
+
+Or use Google Play's Internal Testing track to test the AAB before public release.
