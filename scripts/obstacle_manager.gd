@@ -8,10 +8,11 @@ class_name ObstacleManager
 
 # Obstacle settings
 @export var spawn_x_position = 600.0  # Spawn just off-screen to the right
-@export var min_spawn_interval = 1.0  # Minimum time between obstacles
-@export var max_spawn_interval = 2.5  # Maximum time between obstacles
-@export var obstacle_speed = 300.0    # Base speed obstacles move
-@export var speed_increase_rate = 10.0  # How much speed increases over time
+@export var min_spawn_interval = 1.5  # Minimum time between obstacles
+@export var max_spawn_interval = 3.0  # Maximum time between obstacles
+@export var initial_obstacle_speed = 200.0    # Initial speed obstacles move
+@export var max_obstacle_speed = 400.0  # Maximum obstacle speed
+@export var speed_increase_rate = 5.0  # How much speed increases per second
 
 # Lane positions (should match player's lane positions)
 var lane_positions = [100, 270, 440]
@@ -22,6 +23,7 @@ var spawn_timer = 0.0
 var current_speed = 0.0
 var is_active = false
 var game_time = 0.0
+var difficulty_factor = 0.0  # 0 to 1, increases over time
 
 func _ready():
 	randomize()  # Initialize random seed
@@ -35,7 +37,8 @@ func start():
 	# Initialize variables
 	is_active = true
 	game_time = 0
-	current_speed = obstacle_speed
+	current_speed = initial_obstacle_speed
+	difficulty_factor = 0.0
 	spawn_timer = randf_range(min_spawn_interval, max_spawn_interval)
 
 func stop():
@@ -48,18 +51,21 @@ func _process(delta):
 	# Update game time
 	game_time += delta
 	
+	# Update difficulty factor (maxes out at 1.0 after 60 seconds)
+	difficulty_factor = min(game_time / 60.0, 1.0)
+	
 	# Increase speed over time
-	current_speed = min(current_speed + speed_increase_rate * delta, obstacle_speed * 2)
+	current_speed = initial_obstacle_speed + (max_obstacle_speed - initial_obstacle_speed) * difficulty_factor
 	
 	# Update spawn timer
 	spawn_timer -= delta
 	if spawn_timer <= 0:
 		spawn_obstacle()
-		spawn_timer = randf_range(min_spawn_interval, max_spawn_interval)
 		
-		# Decrease spawn interval over time (makes game harder)
-		min_spawn_interval = max(0.5, min_spawn_interval - 0.01)
-		max_spawn_interval = max(1.0, max_spawn_interval - 0.01)
+		# Spawn interval decreases as difficulty increases
+		var current_min_interval = lerp(min_spawn_interval, 0.7, difficulty_factor)
+		var current_max_interval = lerp(max_spawn_interval, 1.5, difficulty_factor)
+		spawn_timer = randf_range(current_min_interval, current_max_interval)
 	
 	# Move and update obstacles
 	var obstacles_to_remove = []
@@ -95,18 +101,35 @@ func spawn_obstacle():
 	
 	# Position obstacle based on type
 	var lane = randi() % 3  # Pick a random lane (0, 1, or 2)
-	obstacle.position.x = spawn_x_position
 	
 	if obstacle_type == 0:  # Ground obstacle
-		obstacle.position.y = 800  # Ground level
-		obstacle.position.x = spawn_x_position + lane_positions[lane]
+		obstacle.position.y = 790  # Ground level
+		obstacle.position.x = spawn_x_position
+		obstacle.position.x += lane_positions[lane] - 270  # Offset based on lane
 	elif obstacle_type == 1:  # Air obstacle (requires jumping)
-		obstacle.position.y = 720  # Air level (requires a jump)
-		obstacle.position.x = spawn_x_position + lane_positions[lane]
+		obstacle.position.y = 730  # Air level (requires a jump)
+		obstacle.position.x = spawn_x_position
+		obstacle.position.x += lane_positions[lane] - 270  # Offset based on lane
 	else:  # Random lane obstacle
-		obstacle.position.y = 800  # Ground level
-		obstacle.position.x = spawn_x_position + lane_positions[lane]
+		obstacle.position.y = 790  # Ground level
+		obstacle.position.x = spawn_x_position
+		obstacle.position.x += lane_positions[lane] - 270  # Offset based on lane
 	
-	# Pass speed to obstacle if it has the property
-	if obstacle.has_method("set_speed"):
-		obstacle.set_speed(current_speed)
+	# As difficulty increases, sometimes spawn multiple obstacles at once
+	if difficulty_factor > 0.3 and randf() < difficulty_factor * 0.5:
+		# Spawn a second obstacle in a different lane
+		var second_lane = (lane + 1 + randi() % 2) % 3  # Ensure different lane
+		var second_obstacle
+		
+		if randi() % 2 == 0 and ground_obstacle_scene:
+			second_obstacle = ground_obstacle_scene.instantiate()
+			second_obstacle.position.y = 790
+		elif air_obstacle_scene:
+			second_obstacle = air_obstacle_scene.instantiate()
+			second_obstacle.position.y = 730
+			
+		if second_obstacle:
+			add_child(second_obstacle)
+			active_obstacles.append(second_obstacle)
+			second_obstacle.position.x = spawn_x_position
+			second_obstacle.position.x += lane_positions[second_lane] - 270
