@@ -46,12 +46,12 @@ const SAVE_FILE_PATH = "user://highscore.save"
 func _ready():
 	randomize()
 	
-	# Detect if on mobile platform
-	is_mobile = OS.get_name() == "Android" or OS.get_name() == "iOS"
-	
-	# Ensure mobile orientation is set to portrait
-	if is_mobile:
+	# Force portrait orientation for mobile
+	if OS.get_name() == "Android" or OS.get_name() == "iOS":
+		is_mobile = true
+		# Use explicit screen orientation setting - 1 is portrait
 		DisplayServer.screen_set_orientation(DisplayServer.SCREEN_PORTRAIT)
+		print("Setting screen orientation to portrait")
 	
 	# Show/hide touch controls based on platform
 	if is_mobile:
