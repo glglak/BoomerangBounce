@@ -49,8 +49,14 @@ func _ready():
 	# Detect if on mobile platform
 	is_mobile = OS.get_name() == "Android" or OS.get_name() == "iOS"
 	
+	# Ensure mobile orientation is set to portrait
+	if is_mobile:
+		DisplayServer.screen_set_orientation(DisplayServer.SCREEN_PORTRAIT)
+	
 	# Show/hide touch controls based on platform
-	controls_container.visible = !is_mobile
+	if is_mobile:
+		# On mobile, we'll use touch screen instead of buttons
+		controls_container.visible = false
 	
 	# Load high score
 	load_high_score()
@@ -94,24 +100,38 @@ func _process(delta):
 	
 	# Handle touch input on mobile
 	if is_mobile:
-		_handle_touch_input()
+		_handle_mobile_touch_input()
 
-func _handle_touch_input():
-	# Process touch input for mobile
+func _input(event):
+	# Process input for mobile touches
+	if is_mobile and event is InputEventScreenTouch and event.pressed:
+		_handle_touch(event.position)
+
+func _handle_mobile_touch_input():
+	# Process any active touches
 	if Input.is_action_just_pressed("ui_touch"):
 		var touch_position = get_viewport().get_mouse_position()
-		var screen_width = get_viewport().get_visible_rect().size.x
+		_handle_touch(touch_position)
+
+func _handle_touch(position):
+	if !game_active:
+		# If game over, check if the touch is on the restart button
+		if game_over_panel.visible and gameover_restart_button.get_global_rect().has_point(position):
+			restart_game()
+		return
 		
-		# Determine action based on touch position
-		if touch_position.y < get_viewport().get_visible_rect().size.y * 0.8:
-			# Jump if touching the upper part of the screen
-			player.try_jump()
+	var screen_width = get_viewport().get_visible_rect().size.x
+	var screen_height = get_viewport().get_visible_rect().size.y
+	
+	# If in the upper 70% of the screen, jump
+	if position.y < screen_height * 0.7:
+		player.try_jump()
+	else:
+		# Lower 30% is for left/right movement
+		if position.x < screen_width / 2:
+			player.move_left()
 		else:
-			# Left/right movement based on which half of the screen was touched
-			if touch_position.x < screen_width / 2:
-				player.move_left()
-			else:
-				player.move_right()
+			player.move_right()
 
 func _on_obstacle_passed():
 	# Increment score when an obstacle is passed
