@@ -53,10 +53,8 @@ func _ready():
 		DisplayServer.screen_set_orientation(DisplayServer.SCREEN_PORTRAIT)
 		print("Setting screen orientation to portrait")
 	
-	# Show/hide touch controls based on platform
-	if is_mobile:
-		# On mobile, we'll use touch screen instead of buttons
-		controls_container.visible = false
+	# Make controls visible on all platforms
+	controls_container.visible = true
 	
 	# Load high score
 	load_high_score()
@@ -67,9 +65,12 @@ func _ready():
 	obstacle_manager.connect("obstacle_passed", Callable(self, "_on_obstacle_passed"))
 	restart_button.connect("pressed", Callable(self, "restart_game"))
 	gameover_restart_button.connect("pressed", Callable(self, "restart_game"))
-	left_button.connect("pressed", Callable(self, "_on_left_button_pressed"))
-	right_button.connect("pressed", Callable(self, "_on_right_button_pressed"))
-	jump_button.connect("pressed", Callable(self, "_on_jump_button_pressed"))
+	
+	# Connect player movement signals from Controls
+	controls_container.connect("move_left_pressed", Callable(player, "move_left"))
+	controls_container.connect("move_right_pressed", Callable(player, "move_right"))
+	controls_container.connect("jump_pressed", Callable(player, "try_jump"))
+	controls_container.connect("set_target_position", Callable(player, "set_target_position"))
 	
 	# Pass player reference to obstacle manager
 	obstacle_manager.set_player_reference(player)
@@ -97,41 +98,6 @@ func _process(delta):
 	
 	# Update game time (used for difficulty scaling)
 	game_time += delta
-	
-	# Handle touch input on mobile
-	if is_mobile:
-		_handle_mobile_touch_input()
-
-func _input(event):
-	# Process input for mobile touches
-	if is_mobile and event is InputEventScreenTouch and event.pressed:
-		_handle_touch(event.position)
-
-func _handle_mobile_touch_input():
-	# Process any active touches
-	if Input.is_action_just_pressed("ui_touch"):
-		var touch_position = get_viewport().get_mouse_position()
-		_handle_touch(touch_position)
-
-func _handle_touch(position):
-	if !game_active:
-		# If game over, check if the touch is on the restart button
-		if game_over_panel.visible and gameover_restart_button.get_global_rect().has_point(position):
-			restart_game()
-		return
-		
-	var screen_width = get_viewport().get_visible_rect().size.x
-	var screen_height = get_viewport().get_visible_rect().size.y
-	
-	# If in the upper 70% of the screen, jump
-	if position.y < screen_height * 0.7:
-		player.try_jump()
-	else:
-		# Lower 30% is for left/right movement
-		if position.x < screen_width / 2:
-			player.move_left()
-		else:
-			player.move_right()
 
 func _on_obstacle_passed():
 	# Increment score when an obstacle is passed
@@ -273,13 +239,3 @@ func load_high_score():
 				high_score = save_data.high_score
 	
 	update_high_score_display()
-
-# Touch control handler functions
-func _on_left_button_pressed():
-	player.move_left()
-
-func _on_right_button_pressed():
-	player.move_right()
-
-func _on_jump_button_pressed():
-	player.try_jump()
