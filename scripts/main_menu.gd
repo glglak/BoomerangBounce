@@ -9,6 +9,12 @@ extends Control
 const SAVE_FILE_PATH = "user://highscore.save"
 
 func _ready():
+	# Force portrait orientation for mobile
+	if OS.get_name() == "Android" or OS.get_name() == "iOS":
+		# Use explicit screen orientation setting - 1 is portrait
+		DisplayServer.screen_set_orientation(DisplayServer.SCREEN_PORTRAIT)
+		print("Setting screen orientation to portrait from main menu")
+		
 	# Connect button signals
 	play_button.connect("pressed", Callable(self, "_on_play_button_pressed"))
 	quit_button.connect("pressed", Callable(self, "_on_quit_button_pressed"))
