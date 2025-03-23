@@ -7,6 +7,7 @@ signal move_left_released
 signal move_right_pressed
 signal move_right_released
 signal jump_pressed
+signal set_target_position(pos_x)  # New signal to set exact target position
 
 # Touch state
 var left_touch_idx: int = -1
@@ -50,35 +51,19 @@ func _handle_touch_event(event: InputEventScreenTouch) -> void:
 			jump_touch_idx = event.index
 			emit_signal("jump_pressed")
 		else:
-			# For touches elsewhere on screen, check which half was touched
+			# For touches elsewhere on screen, jump toward that x position
 			directional_jump_touch_idx.append(event.index)
 			
-			if touch_position.x < get_viewport().get_visible_rect().size.x / 2:
-				# Left half of screen - jump left
-				emit_signal("jump_pressed")
-				emit_signal("move_left_pressed")
-				
-				# Register input actions
-				Input.action_press("jump")
-				Input.action_press("move_left")
-				
-				# Auto-release after short time
-				await get_tree().create_timer(0.2).timeout
-				Input.action_release("move_left")
-			else:
-				# Right half of screen - jump right
-				emit_signal("jump_pressed")
-				emit_signal("move_right_pressed")
-				
-				# Register input actions
-				Input.action_press("jump")
-				Input.action_press("move_right")
-				
-				# Auto-release after short time
-				await get_tree().create_timer(0.2).timeout
-				Input.action_release("move_right")
+			# Signal player to jump
+			emit_signal("jump_pressed")
 			
-			# Auto-release jump
+			# Signal player to move toward touch position
+			emit_signal("set_target_position", touch_position.x)
+			
+			# Register input actions
+			Input.action_press("jump")
+			
+			# Auto-release jump after short time
 			await get_tree().create_timer(0.1).timeout
 			Input.action_release("jump")
 	else:
