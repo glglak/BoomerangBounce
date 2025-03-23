@@ -7,7 +7,7 @@ signal move_left_released
 signal move_right_pressed
 signal move_right_released
 signal jump_pressed
-signal set_target_position(pos_x)  # New signal to set exact target position
+signal set_target_position(pos_x)  # Signal to set exact target position
 
 # Touch state
 var left_touch_idx: int = -1
@@ -20,6 +20,9 @@ var directional_jump_touch_idx: Array = []  # Store indexes for directional jump
 @onready var right_button: TextureButton = $RightButton
 @onready var jump_button: TextureButton = $JumpButton
 
+# Helper label for debugging
+@onready var help_label: Label = $HelpLabel
+
 func _ready() -> void:
 	# Connect button signals
 	left_button.connect("button_down", _on_left_button_down)
@@ -29,6 +32,10 @@ func _ready() -> void:
 	right_button.connect("button_up", _on_right_button_up)
 	
 	jump_button.connect("button_down", _on_jump_button_down)
+	
+	# Make sure help text is visible
+	if help_label:
+		help_label.visible = true
 
 func _input(event: InputEvent) -> void:
 	# Handle touch input
@@ -51,14 +58,15 @@ func _handle_touch_event(event: InputEventScreenTouch) -> void:
 			jump_touch_idx = event.index
 			emit_signal("jump_pressed")
 		else:
-			# For touches elsewhere on screen, jump toward that x position
+			# For touches elsewhere on screen, direct the jump to that position
 			directional_jump_touch_idx.append(event.index)
 			
-			# Signal player to jump
-			emit_signal("jump_pressed")
-			
-			# Signal player to move toward touch position
+			# Signal player to move toward touch position first
 			emit_signal("set_target_position", touch_position.x)
+			
+			# Then signal to jump (slightly delayed to ensure direction works first)
+			await get_tree().create_timer(0.02).timeout
+			emit_signal("jump_pressed")
 			
 			# Register input actions
 			Input.action_press("jump")
@@ -92,6 +100,10 @@ func _is_touch_in_jump_control(pos: Vector2) -> bool:
 func _on_left_button_down() -> void:
 	emit_signal("move_left_pressed")
 	
+	# Set target position immediately with move_left
+	var viewport_rect = get_viewport_rect().size
+	emit_signal("set_target_position", viewport_rect.x * 0.25)  # 1/4 of the screen from left
+	
 	# Also register input action for player script to pick up
 	Input.action_press("move_left")
 
@@ -104,6 +116,10 @@ func _on_left_button_up() -> void:
 func _on_right_button_down() -> void:
 	emit_signal("move_right_pressed")
 	
+	# Set target position immediately with move_right
+	var viewport_rect = get_viewport_rect().size
+	emit_signal("set_target_position", viewport_rect.x * 0.75)  # 3/4 of the screen from left
+	
 	# Also register input action for player script to pick up
 	Input.action_press("move_right")
 
@@ -114,6 +130,7 @@ func _on_right_button_up() -> void:
 	Input.action_release("move_right")
 
 func _on_jump_button_down() -> void:
+	# Jump in place (no horizontal movement)
 	emit_signal("jump_pressed")
 	
 	# Also register input action for player script to pick up
