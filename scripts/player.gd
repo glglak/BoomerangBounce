@@ -4,12 +4,11 @@ class_name Player
 signal player_hit
 signal jump_performed  # Signal for jump sound
 
-# Lane management
-var current_lane = 1  # 0 = left, 1 = middle, 2 = right
-var lane_positions = [100, 270, 440]  # x positions for lanes
-var lane_change_speed = 500.0
-var num_lanes = 3  # Number of lanes
-var lane_width = 160.0  # Width between lanes
+# Movement parameters
+var screen_width: float
+var screen_margin: float = 50.0  # Margin from screen edges
+var move_speed: float = 600.0
+var target_x_position: float
 
 # Jump properties
 @export var jump_force: float = -800.0  # Increased jump force
@@ -20,21 +19,29 @@ var lane_width = 160.0  # Width between lanes
 var is_jumping = false
 var has_double_jumped = false
 var is_dead = false
-var target_x_position = lane_positions[1]  # Start in middle lane
-var floor_y_position = 870  # Increased floor position to be closer to bottom
+var floor_y_position: float
 
 # Reference nodes
 @onready var animation_player = $AnimationPlayer
 @onready var sprite = $Sprite2D
 
 func _ready():
-	# Set initial position based on lane
-	target_x_position = lane_positions[1]  # Start in middle lane
+	# Get screen dimensions
+	var viewport_rect = get_viewport_rect().size
+	screen_width = viewport_rect.x
+	
+	# Set floor position near bottom of screen (95% of screen height)
+	floor_y_position = viewport_rect.y * 0.92
+	
+	# Start in the middle of the screen
+	target_x_position = screen_width / 2
 	global_position.x = target_x_position
-	global_position.y = floor_y_position - 30  # Start slightly above floor to account for character height
+	global_position.y = floor_y_position - 30  # Start slightly above floor
+	
+	# Set initial animation
 	animation_player.play("idle")
 	
-	# Scale the character bigger
+	# Scale the character
 	scale = Vector2(1.5, 1.5)  # Increase the scale by 50%
 
 func _physics_process(delta):
@@ -55,10 +62,10 @@ func _physics_process(delta):
 		is_jumping = false
 		has_double_jumped = false
 	
-	# Handle lane movement (horizontal position)
-	var lane_diff = target_x_position - global_position.x
-	if abs(lane_diff) > 5.0:
-		velocity.x = lane_diff * lane_change_speed * delta
+	# Handle horizontal movement
+	var x_diff = target_x_position - global_position.x
+	if abs(x_diff) > 5.0:
+		velocity.x = sign(x_diff) * move_speed
 	else:
 		velocity.x = 0
 		global_position.x = target_x_position
@@ -67,6 +74,7 @@ func _physics_process(delta):
 	move_and_slide()
 	
 	# Clamp position to stay in game area
+	global_position.x = clamp(global_position.x, screen_margin, screen_width - screen_margin)
 	global_position.y = min(global_position.y, floor_y_position)
 	
 	# Update animation based on state
@@ -77,39 +85,19 @@ func _input(event):
 		return
 		
 	# Handle keyboard input (for testing)
-	if event.is_action_pressed("move_left"):
-		move_left()
-	elif event.is_action_pressed("move_right"):
-		move_right()
-	elif event.is_action_pressed("jump"):
+	if event.is_action_pressed("jump"):
 		try_jump()
 
-# Change lane by a relative amount (-1 for left, +1 for right)
-func change_lane(direction: int):
-	var new_lane = clamp(current_lane + direction, 0, num_lanes - 1)
-	if new_lane != current_lane:
-		current_lane = new_lane
-		target_x_position = lane_positions[current_lane]
+# Set target position directly (used for touch controls)
+func set_target_position(pos_x: float):
+	target_x_position = clamp(pos_x, screen_margin, screen_width - screen_margin)
 
-# Calculate x position based on lane number
-func calculate_lane_position(lane: int):
-	var center_lane = num_lanes / 2.0
-	return lane_width * (lane - center_lane + 0.5)
-
-# Called from UI buttons
+# Called from directional controls
 func move_left():
-	if current_lane > 0:
-		current_lane -= 1
-		target_x_position = lane_positions[current_lane]
+	target_x_position = max(global_position.x - 150, screen_margin)
 
 func move_right():
-	if current_lane < 2:
-		current_lane += 1
-		target_x_position = lane_positions[current_lane]
-
-func stop_horizontal():
-	# Not needed in lane-based movement, but kept for API compatibility
-	pass
+	target_x_position = min(global_position.x + 150, screen_width - screen_margin)
 
 func try_jump():
 	if !is_jumping or is_on_floor() or global_position.y >= floor_y_position - 20:
@@ -159,9 +147,14 @@ func reset():
 	is_dead = false
 	is_jumping = false
 	has_double_jumped = false
-	current_lane = 1
-	target_x_position = lane_positions[current_lane]
-	global_position = Vector2(lane_positions[current_lane], floor_y_position - 30)
+	
+	# Reset position to middle bottom of screen
+	var viewport_rect = get_viewport_rect().size
+	screen_width = viewport_rect.x
+	floor_y_position = viewport_rect.y * 0.92
+	
+	target_x_position = screen_width / 2
+	global_position = Vector2(target_x_position, floor_y_position - 30)
 	velocity = Vector2.ZERO
 	sprite.modulate = Color.WHITE  # Reset color
 	animation_player.play("idle")
