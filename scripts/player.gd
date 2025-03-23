@@ -8,6 +8,8 @@ signal jump_performed  # Signal for jump sound
 var current_lane = 1  # 0 = left, 1 = middle, 2 = right
 var lane_positions = [100, 270, 440]  # x positions for lanes
 var lane_change_speed = 500.0
+var num_lanes = 3  # Number of lanes
+var lane_width = 160.0  # Width between lanes
 
 # Jump properties
 @export var jump_force: float = -800.0  # Increased jump force
