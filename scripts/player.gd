@@ -27,8 +27,11 @@ var floor_y_position: float
 @onready var sprite = $Sprite2D
 
 func _ready():
+	# Wait a frame to ensure viewport size is correct
+	await get_tree().process_frame
+	
 	# Force immediate position update
-	call_deferred("_update_screen_metrics")
+	_update_screen_metrics()
 
 func _update_screen_metrics():
 	# Get screen dimensions
@@ -36,19 +39,18 @@ func _update_screen_metrics():
 	screen_width = viewport_rect.x
 	
 	# Set floor position to absolute bottom of screen
-	floor_y_position = viewport_rect.y - 50  # Just a small margin from bottom
-	print("Screen size: ", viewport_rect, " Floor Y: ", floor_y_position)
+	floor_y_position = viewport_rect.y - 30  # Very close to bottom of screen
 	
 	# Start in the middle of the screen
 	target_x_position = screen_width / 2
 	global_position.x = target_x_position
-	global_position.y = floor_y_position - 30  # Start slightly above floor
+	global_position.y = floor_y_position - 20  # Start slightly above floor to prevent collision issues
+	
+	# Log screen metrics for debugging
+	print("Screen size: ", viewport_rect, " Floor Y: ", floor_y_position, " Player position: ", global_position)
 	
 	# Set initial animation
 	animation_player.play("idle")
-	
-	# Scale the character
-	scale = Vector2(1.5, 1.5)
 
 func _physics_process(delta):
 	if is_dead:
@@ -56,7 +58,7 @@ func _physics_process(delta):
 	
 	# First, check if the screen dimensions have changed
 	var current_viewport_rect = get_viewport_rect().size
-	if abs(current_viewport_rect.x - screen_width) > 10 or abs(current_viewport_rect.y - floor_y_position - 50) > 10:
+	if abs(current_viewport_rect.x - screen_width) > 10 or abs(current_viewport_rect.y - floor_y_position - 30) > 10:
 		_update_screen_metrics()
 	
 	# Apply gravity
@@ -171,7 +173,7 @@ func reset():
 	_update_screen_metrics()
 	
 	target_x_position = screen_width / 2
-	global_position = Vector2(target_x_position, floor_y_position - 30)
+	global_position = Vector2(target_x_position, floor_y_position - 20)
 	velocity = Vector2.ZERO
 	sprite.modulate = Color.WHITE  # Reset color
 	animation_player.play("idle")
