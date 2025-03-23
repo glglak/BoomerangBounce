@@ -4,11 +4,12 @@ This guide provides information on customizing the game's visuals and gameplay e
 
 ## Character Customization
 
-The player character is defined in `scenes/Player.tscn` and uses the following dimensions:
+The player character is defined in `scenes/Player.tscn` and now uses the following dimensions:
 
-- **Size:** Approximately 50x60 pixels
+- **Base Size:** Approximately 50x60 pixels
+- **Display Size:** Scaled up by 50% (approximately 75x90 pixels)
 - **Position:** Centered in one of three lanes (x = 100, 270, or 440)
-- **Floor position:** y = 800 pixels from the top
+- **Floor position:** y = 870 pixels from the top (closer to the bottom of the screen)
 - **Animation states:** idle, run, jump, double_jump, fall
 
 To create a custom character:
@@ -35,27 +36,30 @@ The game uses SVG backgrounds that change as the player scores points:
    - `assets/sprites/background5.svg` - Final background (score 40+)
 
 3. **Design Guidelines:**
-   - Keep the ground area clear (approximately y=800 to y=960)
+   - Keep the ground area clear (approximately y=870 to y=960)
    - Ensure good contrast with player and obstacles
    - Consider creating a visual progression across backgrounds
    - SVG format allows for easy scaling across different resolutions
 
 ## Obstacle Customization
 
-The game has three types of obstacles:
+The game has three types of obstacles, now scaled 50% larger:
 
 1. **Ground Obstacles (`GroundObstacle.tscn`):**
-   - Size: Approximately 64x20 pixels
-   - Position: y = 790 pixels (ground level)
+   - Base Size: Approximately 64x20 pixels
+   - Display Size: Scaled up by 50% (approximately 96x30 pixels)
+   - Position: y = 860 pixels (ground level)
    - Best for requiring lane changes
 
 2. **Air Obstacles (`AirObstacle.tscn`):**
-   - Size: Approximately 20x64 pixels
-   - Position: y = 730 pixels (above ground)
+   - Base Size: Approximately 20x64 pixels
+   - Display Size: Scaled up by 50% (approximately 30x96 pixels)
+   - Position: y = 800 pixels (above ground)
    - Best for requiring jumps
 
 3. **Standard Obstacles (`Obstacle.tscn`):**
-   - Size: Approximately 48x48 pixels (circular)
+   - Base Size: Approximately 48x48 pixels (circular)
+   - Display Size: Scaled up by 50% (approximately 72x72 pixels)
    - Position: varies
    - Generic obstacle type
 
@@ -65,6 +69,19 @@ To customize obstacles:
 2. Replace sprites with your own designs
 3. Adjust collision shapes if needed
 4. Modify rotation speed in the `obstacle.gd` script
+
+## Mobile-Specific Customization
+
+For the mobile version:
+
+1. **Controls:**
+   - On-screen buttons are hidden on mobile
+   - Top 70% of the screen: Tap to jump
+   - Bottom 30% of the screen: Tap left or right side to move
+
+2. **Display:**
+   - The game is locked to portrait orientation
+   - Make sure visuals work well on the standard 540x960 resolution
 
 ## Adjusting Game Difficulty
 
@@ -76,10 +93,10 @@ Game difficulty is controlled in `scripts/obstacle_manager.gd`:
 - `speed_increase_rate`: How quickly obstacles accelerate as the game progresses
 
 For the player character in `scripts/player.gd`:
-- `jump_force`: How high the player jumps
-- `double_jump_force`: How high the double jump goes
-- `gravity`: How quickly the player falls back down
-- `lane_change_speed`: How quickly the player moves between lanes
+- `jump_force`: How high the player jumps (currently -800)
+- `double_jump_force`: How high the double jump goes (currently -700)
+- `gravity`: How quickly the player falls back down (currently 2500)
+- `lane_change_speed`: How quickly the player moves between lanes (currently 500)
 
 ## Adding Custom Audio
 
