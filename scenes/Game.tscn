@@ -1,23 +1,22 @@
-[gd_scene load_steps=19 format=3]
+[gd_scene load_steps=19 format="3"]
 
 [ext_resource type="Script" path="res://scripts/game_manager.gd" id="1_6l7x2"]
-[ext_resource type="Texture2D" uid="uid://cqh7qjl414uas" path="res://assets/sprites/background1.svg" id="2_mak7p"]
-[ext_resource type="Texture2D" uid="uid://8b5e7pxpugkp" path="res://assets/sprites/background2.svg" id="3_5whlv"]
-[ext_resource type="Texture2D" uid="uid://cyisokln1pd5i" path="res://assets/sprites/background3.svg" id="4_xc7w8"]
-[ext_resource type="Texture2D" uid="uid://dkiwkxn6yphgs" path="res://assets/sprites/background4.svg" id="5_fpxd2"]
-[ext_resource type="Texture2D" uid="uid://cm2divauhn8ib" path="res://assets/sprites/background5.svg" id="6_x8kmv"]
+[ext_resource type="Texture2D" path="res://assets/sprites/background1.svg" id="2_mak7p"]
+[ext_resource type="Texture2D" path="res://assets/sprites/background2.svg" id="3_5whlv"]
+[ext_resource type="Texture2D" path="res://assets/sprites/background3.svg" id="4_xc7w8"]
+[ext_resource type="Texture2D" path="res://assets/sprites/background4.svg" id="5_fpxd2"]
+[ext_resource type="Texture2D" path="res://assets/sprites/background5.svg" id="6_x8kmv"]
 [ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="7_rh6mb"]
 [ext_resource type="Script" path="res://scripts/obstacle_manager.gd" id="8_r8kic"]
 [ext_resource type="PackedScene" path="res://scenes/Obstacle.tscn" id="9_cvnnp"]
 [ext_resource type="PackedScene" path="res://scenes/GroundObstacle.tscn" id="10_k2pgj"]
 [ext_resource type="PackedScene" path="res://scenes/AirObstacle.tscn" id="11_2tl64"]
-[ext_resource type="AudioStream" uid="uid://sjdtfkfm0k2n" path="res://assets/audio/background.mp3" id="12_cde6p"]
-[ext_resource type="AudioStream" uid="uid://ca0imcxsuiojb" path="res://assets/audio/jump.mp3" id="13_8qsj5"]
-[ext_resource type="AudioStream" uid="uid://dcckliuvwx17w" path="res://assets/audio/score.mp3" id="14_3rkqw"]
-[ext_resource type="AudioStream" uid="uid://caxdcgvil18x8" path="res://assets/audio/milestone5.mp3" id="15_5sgnt"]
-[ext_resource type="AudioStream" uid="uid://08tk8esyllmc" path="res://assets/audio/wesopeso.mp3" id="16_a0yg3"]
-[ext_resource type="AudioStream" uid="uid://c0mp4xr1xny5n" path="res://assets/audio/game-over.mp3" id="17_6aek6"]
-
+[ext_resource type="AudioStream" path="res://assets/audio/background.mp3" id="12_cde6p"]
+[ext_resource type="AudioStream" path="res://assets/audio/jump.mp3" id="13_8qsj5"]
+[ext_resource type="AudioStream" path="res://assets/audio/score.mp3" id="14_3rkqw"]
+[ext_resource type="AudioStream" path="res://assets/audio/milestone5.mp3" id="15_5sgnt"]
+[ext_resource type="AudioStream" path="res://assets/audio/wesopeso.mp3" id="16_a0yg3"]
+[ext_resource type="AudioStream" path="res://assets/audio/game-over.mp3" id="17_6aek6"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_h1f7c"]
 size = Vector2(600, 30)
@@ -86,20 +85,20 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -160.0
+offset_top = -90.0
 grow_horizontal = 2
 grow_vertical = 0
 color = Color(0.15, 0.15, 0.15, 1.0)
 
 [node name="GroundCollision" type="StaticBody2D" parent="."]
-position = Vector2(270, 800)
+position = Vector2(270, 870)
 collision_mask = 2
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="GroundCollision"]
 shape = SubResource("RectangleShape2D_h1f7c")
 
 [node name="Player" parent="." instance=ExtResource("7_rh6mb")]
-position = Vector2(100, 770)
+position = Vector2(100, 870)
 
 [node name="ObstacleManager" type="Node2D" parent="."]
 script = ExtResource("8_r8kic")
@@ -168,13 +167,13 @@ theme_override_font_sizes/font_size = 16
 text = "Restart"
 
 [node name="Lane1Marker" type="Marker2D" parent="."]
-position = Vector2(100, 770)
+position = Vector2(100, 870)
 
 [node name="Lane2Marker" type="Marker2D" parent="."]
-position = Vector2(270, 770)
+position = Vector2(270, 870)
 
 [node name="Lane3Marker" type="Marker2D" parent="."]
-position = Vector2(440, 770)
+position = Vector2(440, 870)
 
 [node name="GameOverPanel" type="Panel" parent="UI"]
 visible = false
@@ -299,25 +298,25 @@ grow_vertical = 2
 [node name="Lane1" type="ColorRect" parent="LaneVisuals"]
 layout_mode = 0
 offset_left = 90.0
-offset_top = 800.0
+offset_top = 870.0
 offset_right = 110.0
-offset_bottom = 810.0
+offset_bottom = 880.0
 color = Color(0.8, 0.8, 0.8, 0.5)
 
 [node name="Lane2" type="ColorRect" parent="LaneVisuals"]
 layout_mode = 0
 offset_left = 260.0
-offset_top = 800.0
+offset_top = 870.0
 offset_right = 280.0
-offset_bottom = 810.0
+offset_bottom = 880.0
 color = Color(0.8, 0.8, 0.8, 0.5)
 
 [node name="Lane3" type="ColorRect" parent="LaneVisuals"]
 layout_mode = 0
 offset_left = 430.0
-offset_top = 800.0
+offset_top = 870.0
 offset_right = 450.0
-offset_bottom = 810.0
+offset_bottom = 880.0
 color = Color(0.8, 0.8, 0.8, 0.5)
 
 [node name="Audio" type="Node" parent="."]
