@@ -19,6 +19,9 @@ signal obstacle_passed
 # Lane positions (should match player's lane positions)
 var lane_positions = [100, 270, 440]
 
+# Floor position for obstacles
+var floor_level = 870  # Updated to match new floor position
+
 # Internal variables
 var active_obstacles = []
 var spawn_timer = 0.0
@@ -117,15 +120,15 @@ func spawn_obstacle():
 	var lane = randi() % 3  # Pick a random lane (0, 1, or 2)
 	
 	if obstacle_type == 0:  # Ground obstacle
-		obstacle.position.y = 790  # Ground level
+		obstacle.position.y = floor_level - 10  # Ground level
 		obstacle.position.x = spawn_x_position
 		obstacle.position.x += lane_positions[lane] - 270  # Offset based on lane
 	elif obstacle_type == 1:  # Air obstacle (requires jumping)
-		obstacle.position.y = 730  # Air level (requires a jump)
+		obstacle.position.y = floor_level - 70  # Air level (requires a jump)
 		obstacle.position.x = spawn_x_position
 		obstacle.position.x += lane_positions[lane] - 270  # Offset based on lane
 	else:  # Random lane obstacle
-		obstacle.position.y = 790  # Ground level
+		obstacle.position.y = floor_level - 10  # Ground level
 		obstacle.position.x = spawn_x_position
 		obstacle.position.x += lane_positions[lane] - 270  # Offset based on lane
 	
@@ -137,10 +140,10 @@ func spawn_obstacle():
 		
 		if randi() % 2 == 0 and ground_obstacle_scene:
 			second_obstacle = ground_obstacle_scene.instantiate()
-			second_obstacle.position.y = 790
+			second_obstacle.position.y = floor_level - 10
 		elif air_obstacle_scene:
 			second_obstacle = air_obstacle_scene.instantiate()
-			second_obstacle.position.y = 730
+			second_obstacle.position.y = floor_level - 70
 			
 		if second_obstacle:
 			add_child(second_obstacle)
