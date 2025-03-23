@@ -11,6 +11,9 @@ var player_x_position = 100  # Default player x position
 func _ready():
 	# Connect the signal
 	body_entered.connect(_on_body_entered)
+	
+	# Scale the obstacle bigger
+	scale = Vector2(1.5, 1.5)  # Increase scale by 50%
 
 func _physics_process(delta):
 	# Rotate the obstacle
