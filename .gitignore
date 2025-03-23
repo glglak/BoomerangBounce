@@ -28,3 +28,9 @@ Thumbs.db
 *.aab
 .gradle/
 build/
+
+*.pem
+*.jar
+*.zip
+*.jks
+*.abb
