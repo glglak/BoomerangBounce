@@ -58,10 +58,6 @@ func _physics_process(delta: float) -> void:
 	
 	# Update position based on bezier curve or parabola
 	global_position = calculate_position(t)
-	
-	# Debug info
-	if is_active:
-		print("Boomerang active: pos=", global_position, " t=", t, " returning=", is_returning)
 
 func throw(start_pos: Vector2, speed_multiplier: float = 1.0) -> void:
 	# Set up and start the boomerang flight
@@ -72,7 +68,6 @@ func throw(start_pos: Vector2, speed_multiplier: float = 1.0) -> void:
 	is_active = true
 	visible = true
 	current_speed_multiplier = speed_multiplier
-	print("Boomerang thrown from: ", start_pos, " with speed: ", speed_multiplier)
 
 func reset() -> void:
 	# Reset boomerang state
@@ -92,7 +87,6 @@ func calculate_position(param: float) -> Vector2:
 	return Vector2(x, y)
 
 func _on_body_entered(body: Node) -> void:
-	print("Body entered: ", body.name)
 	if body is Player:
 		# Player hit by boomerang
 		body.hit()
