@@ -12,37 +12,53 @@ script = ExtResource("1_4b8dj")
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = 20.0
-offset_top = -120.0
-offset_right = 120.0
-offset_bottom = -20.0
+offset_left = 30.0
+offset_top = -150.0
+offset_right = 150.0
+offset_bottom = -30.0
 grow_vertical = 0
 texture_normal = ExtResource("2_8qvd1")
 stretch_mode = 0
 
 [node name="RightButton" type="TextureButton" parent="."]
-anchors_preset = 2
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_left = 140.0
-offset_top = -120.0
-offset_right = 240.0
-offset_bottom = -20.0
-grow_vertical = 0
-texture_normal = ExtResource("3_5j7wa")
-stretch_mode = 0
-
-[node name="JumpButton" type="TextureButton" parent="."]
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -120.0
-offset_top = -120.0
-offset_right = -20.0
-offset_bottom = -20.0
+offset_left = -150.0
+offset_top = -150.0
+offset_right = -30.0
+offset_bottom = -30.0
 grow_horizontal = 0
+grow_vertical = 0
+texture_normal = ExtResource("3_5j7wa")
+stretch_mode = 0
+
+[node name="JumpButton" type="TextureButton" parent="."]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -60.0
+offset_top = -150.0
+offset_right = 60.0
+offset_bottom = -30.0
+grow_horizontal = 2
 grow_vertical = 0
 texture_normal = ExtResource("4_ibbq3")
 stretch_mode = 0
+
+[node name="HelpLabel" type="Label" parent="."]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -150.0
+offset_top = 15.0
+offset_right = 150.0
+offset_bottom = 67.0
+grow_horizontal = 2
+text = "Tap left/right side of screen
+to jump in that direction"
+horizontal_alignment = 1
