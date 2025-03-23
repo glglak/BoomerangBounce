@@ -12,6 +12,7 @@ signal jump_pressed
 var left_touch_idx: int = -1
 var right_touch_idx: int = -1
 var jump_touch_idx: int = -1
+var directional_jump_touch_idx: Array = []  # Store indexes for directional jumps
 
 # Button references
 @onready var left_button: TextureButton = $LeftButton
@@ -48,6 +49,38 @@ func _handle_touch_event(event: InputEventScreenTouch) -> void:
 		elif _is_touch_in_jump_control(touch_position):
 			jump_touch_idx = event.index
 			emit_signal("jump_pressed")
+		else:
+			# For touches elsewhere on screen, check which half was touched
+			directional_jump_touch_idx.append(event.index)
+			
+			if touch_position.x < get_viewport().get_visible_rect().size.x / 2:
+				# Left half of screen - jump left
+				emit_signal("jump_pressed")
+				emit_signal("move_left_pressed")
+				
+				# Register input actions
+				Input.action_press("jump")
+				Input.action_press("move_left")
+				
+				# Auto-release after short time
+				await get_tree().create_timer(0.2).timeout
+				Input.action_release("move_left")
+			else:
+				# Right half of screen - jump right
+				emit_signal("jump_pressed")
+				emit_signal("move_right_pressed")
+				
+				# Register input actions
+				Input.action_press("jump")
+				Input.action_press("move_right")
+				
+				# Auto-release after short time
+				await get_tree().create_timer(0.2).timeout
+				Input.action_release("move_right")
+			
+			# Auto-release jump
+			await get_tree().create_timer(0.1).timeout
+			Input.action_release("jump")
 	else:
 		# Touch ended
 		if event.index == left_touch_idx:
@@ -58,6 +91,8 @@ func _handle_touch_event(event: InputEventScreenTouch) -> void:
 			emit_signal("move_right_released")
 		elif event.index == jump_touch_idx:
 			jump_touch_idx = -1
+		elif event.index in directional_jump_touch_idx:
+			directional_jump_touch_idx.erase(event.index)
 
 func _is_touch_in_left_control(pos: Vector2) -> bool:
 	return left_button.get_global_rect().has_point(pos)
