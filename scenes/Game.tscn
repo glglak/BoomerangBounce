@@ -241,31 +241,6 @@ text = "Play Again"
 
 [node name="Controls" type="CanvasLayer" parent="."]
 
-[node name="LeftButton" type="Button" parent="Controls"]
-anchors_preset = 2
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_left = 20.0
-offset_top = -100.0
-offset_right = 100.0
-offset_bottom = -20.0
-grow_vertical = 0
-text = "←"
-
-[node name="RightButton" type="Button" parent="Controls"]
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -100.0
-offset_top = -100.0
-offset_right = -20.0
-offset_bottom = -20.0
-grow_horizontal = 0
-grow_vertical = 0
-text = "→"
-
 [node name="JumpButton" type="Button" parent="Controls"]
 anchors_preset = 7
 anchor_left = 0.5
