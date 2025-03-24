@@ -123,15 +123,29 @@ func spawn_obstacle():
 	var obstacle_type = randi() % 4
 	var obstacle
 	
+	# Make sure boomerang gets spawned regularly (increased chance)
+	if obstacle_type == 3 and randf() > 0.5:  # 50% chance that it will stay as boomerang when selected
+		if boomerang_scene:
+			obstacle = boomerang_scene.instantiate()
+			print("Spawning boomerang obstacle")
+		else:
+			obstacle_type = 0  # Fallback if boomerang scene not available
+	
+	# Handle other obstacle types
 	if obstacle_type == 0 and obstacle_scene:
 		obstacle = obstacle_scene.instantiate()
+		print("Spawning regular obstacle")
 	elif obstacle_type == 1 and ground_obstacle_scene:
 		obstacle = ground_obstacle_scene.instantiate()
+		print("Spawning ground obstacle")
 	elif obstacle_type == 2 and air_obstacle_scene:
 		obstacle = air_obstacle_scene.instantiate()
+		print("Spawning air obstacle")
 	elif obstacle_type == 3 and boomerang_scene:
 		obstacle = boomerang_scene.instantiate()
+		print("Spawning boomerang obstacle")
 	else:
+		print("Failed to spawn obstacle - no valid scene available")
 		return  # No valid obstacle scene to spawn
 	
 	add_child(obstacle)
@@ -200,4 +214,5 @@ func spawn_obstacle():
 			second_obstacle.position.x += lane_positions[second_lane] - 270
 
 func _on_obstacle_passed():
+	print("Obstacle passed - emitting signal")
 	emit_signal("obstacle_passed")
