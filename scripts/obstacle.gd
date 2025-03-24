@@ -24,14 +24,15 @@ func _ready():
 	# Apply scaling to sprite
 	$Sprite2D.scale = Vector2(scale_factor, scale_factor)
 	
-	# We'll handle collision shapes more safely to avoid errors
-	# Instead of modifying collision shapes directly, we'll just scale the node
+	# Scale the collision shape instead of modifying properties directly
+	# This avoids errors with different shape types
 	if has_node("CollisionShape2D"):
-		# Scale the entire collision shape node instead of modifying properties
 		$CollisionShape2D.scale = Vector2(scale_factor, scale_factor)
 	
 	# Ensure the sprite color is white (no tinting)
 	$Sprite2D.modulate = Color.WHITE
+	
+	print("Obstacle initialized with scale factor: ", scale_factor)
 
 func _physics_process(delta):
 	# Rotate the obstacle
@@ -51,20 +52,8 @@ func set_speed(new_speed):
 func set_player_position(pos_x):
 	player_x_position = pos_x
 
-func _on_body_entered(body):
-	# Check if the body is the player with improved collision detection
+func _on_body_entered(body: Node) -> void:
 	if body is Player:
-		var player = body as Player
-		
-		# Add a small delay before registering hit on mobile to prevent false hits
-		if is_mobile:
-			# Give a small grace period on mobile if player is jumping
-			if player.is_jumping and player.velocity.y < 0:
-				await get_tree().create_timer(0.05).timeout
-				
-				# If player has moved past the obstacle during grace period, don't count as hit
-				if position.x < player.global_position.x - 40:
-					return
-		
-		# Register the hit
-		player.hit()
+		# Player hit by obstacle 
+		print("Obstacle hit player!")
+		body.hit()
