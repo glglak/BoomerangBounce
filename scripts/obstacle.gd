@@ -14,10 +14,16 @@ func _ready():
 	
 	# Ensure sprite has its original scale (no scaling)
 	$Sprite2D.scale = Vector2(1, 1)
+	
+	# Ensure the sprite color is white (no tinting)
+	$Sprite2D.modulate = Color.WHITE
 
 func _physics_process(delta):
 	# Rotate the obstacle
 	rotate(rotation_speed * delta)
+	
+	# Ensure color stays consistent
+	$Sprite2D.modulate = Color.WHITE
 	
 	# Check if this obstacle has passed the player
 	if not has_passed_player and position.x < player_x_position - 50:
