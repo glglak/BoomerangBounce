@@ -22,8 +22,6 @@ const SAVE_FILE_PATH = "user://highscore.save"
 @onready var game_over_panel = $UI/GameOverPanel
 @onready var restart_button = $UI/RestartButton
 @onready var gameover_restart_button = $UI/GameOverPanel/RestartButton
-@onready var left_button = $Controls/LeftButton
-@onready var right_button = $Controls/RightButton
 @onready var jump_button = $Controls/JumpButton
 @onready var help_label = $Controls/HelpLabel
 @onready var ground = $Ground  # Reference to the ground visual
@@ -58,8 +56,6 @@ func _ready():
 	setup_controls()
 	
 	# Connect button signals
-	left_button.connect("pressed", Callable(self, "_on_left_button_pressed"))
-	right_button.connect("pressed", Callable(self, "_on_right_button_pressed"))
 	jump_button.connect("pressed", Callable(self, "_on_jump_button_pressed"))
 	
 	# Load high score
@@ -91,14 +87,14 @@ func _ready():
 	start_game()
 
 func setup_controls():
-	# Make controls visible and positioned properly
+	# Make controls visible and positioned properly for mobile
 	controls_container.visible = true
 	
 	# Set up help label
 	if is_mobile:
 		help_label.text = "Tap left/right side of screen\nto jump in that direction"
 	else:
-		help_label.text = "Arrow keys to move, Space to jump\nor use the on-screen buttons"
+		help_label.text = "Tap left/right side of screen\nor use Space to jump"
 
 func _process(delta):
 	if not game_active:
@@ -110,22 +106,8 @@ func _process(delta):
 	game_time += delta
 	
 	# Input handling for keyboard
-	if Input.is_action_just_pressed("ui_left"):
-		_on_left_button_pressed()
-	elif Input.is_action_just_pressed("ui_right"):
-		_on_right_button_pressed()
-	elif Input.is_action_just_pressed("ui_accept") or Input.is_action_just_pressed("ui_select"):
+	if Input.is_action_just_pressed("ui_accept") or Input.is_action_just_pressed("ui_select"):
 		_on_jump_button_pressed()
-
-func _on_left_button_pressed():
-	if game_active and player:
-		player.move_left()
-		player.try_jump()
-
-func _on_right_button_pressed():
-	if game_active and player:
-		player.move_right()
-		player.try_jump()
 
 func _on_jump_button_pressed():
 	if game_active and player:
@@ -279,8 +261,10 @@ func _unhandled_input(event):
 		var screen_width = get_viewport().size.x
 		
 		# Only handle touch events in the game area (not on UI controls)
-		if event.position.y < screen_width - 120:  # Above control area
+		if event.position.y < get_viewport().size.y - 120:  # Above control area
 			if event.position.x < screen_width / 2:
-				_on_left_button_pressed()
+				player.set_target_position(max(player.global_position.x - 170, player.screen_margin)) 
+				player.try_jump()
 			else:
-				_on_right_button_pressed()
+				player.set_target_position(min(player.global_position.x + 170, screen_width - player.screen_margin))
+				player.try_jump()
