@@ -14,11 +14,13 @@ var jumping_to_position: bool = false  # Track if we're in a directional jump
 # Jump properties
 @export var jump_force: float = -800.0
 @export var gravity: float = 2500.0
-@export var double_jump_force: float = -700.0
+@export var double_jump_force: float = -850.0
+@export var triple_jump_force: float = -900.0
 
 # State variables
 var is_jumping = false
 var has_double_jumped = false
+var has_triple_jumped = false
 var is_dead = false
 var floor_y_position: float
 var is_mobile = false
@@ -85,6 +87,7 @@ func _physics_process(delta):
 		# Reset jump states when on floor
 		is_jumping = false
 		has_double_jumped = false
+		has_triple_jumped = false
 		jumping_to_position = false  # Reset position jump flag
 	
 	# Handle horizontal movement
@@ -151,6 +154,8 @@ func try_jump():
 		# First jump
 		velocity.y = jump_force
 		is_jumping = true
+		has_double_jumped = false
+		has_triple_jumped = false
 		animation_player.play("jump")
 		emit_signal("jump_performed")  # Emit signal for sound
 	elif is_jumping and not has_double_jumped:
@@ -158,6 +163,12 @@ func try_jump():
 		velocity.y = double_jump_force
 		has_double_jumped = true
 		animation_player.play("double_jump")
+		emit_signal("jump_performed")  # Emit signal for sound
+	elif is_jumping and has_double_jumped and not has_triple_jumped:
+		# Triple jump (even higher)
+		velocity.y = triple_jump_force
+		has_triple_jumped = true
+		animation_player.play("double_jump")  # Reuse the same animation
 		emit_signal("jump_performed")  # Emit signal for sound
 
 func update_animation():
@@ -167,7 +178,9 @@ func update_animation():
 	if global_position.y < floor_y_position - 20:
 		if velocity.y < 0:
 			# Rising - show jump animation
-			if has_double_jumped and not animation_player.current_animation == "double_jump":
+			if has_triple_jumped and not animation_player.current_animation == "double_jump":
+				animation_player.play("double_jump")
+			elif has_double_jumped and not animation_player.current_animation == "double_jump":
 				animation_player.play("double_jump")
 			elif not animation_player.current_animation == "jump":
 				animation_player.play("jump")
@@ -194,6 +207,7 @@ func reset():
 	is_dead = false
 	is_jumping = false
 	has_double_jumped = false
+	has_triple_jumped = false
 	jumping_to_position = false
 	
 	# Force position update
