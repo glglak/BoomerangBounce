@@ -68,7 +68,8 @@ func _physics_process(delta):
 	
 	# First, check if the screen dimensions have changed
 	var current_viewport_rect = get_viewport_rect().size
-	if abs(current_viewport_rect.x - screen_width) > 10 or abs(current_viewport_rect.y - floor_y_position - (is_mobile ? 120 : 30)) > 10:
+	var expected_floor_offset = 120 if is_mobile else 30
+	if abs(current_viewport_rect.x - screen_width) > 10 or abs(current_viewport_rect.y - floor_y_position - expected_floor_offset) > 10:
 		_update_screen_metrics()
 	
 	# Apply gravity
