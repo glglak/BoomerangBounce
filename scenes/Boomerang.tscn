@@ -1,12 +1,14 @@
-[gd_scene load_steps=3 format="3"]
+[gd_scene load_steps=3 format="3" uid="uid://cpaxp3vjtwsam"]
 
 [ext_resource type="Script" path="res://scripts/boomerang.gd" id="1_rlm82"]
-[ext_resource type="Texture2D" path="res://assets/sprites/boomerang.svg" id="2_uv8r5"]
+[ext_resource type="Texture2D" uid="uid://d0rfl7q8iatb2" path="res://assets/sprites/boomerang.svg" id="2_uv8r5"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_tjmgv"]
 size = Vector2(40, 40)
 
 [node name="Boomerang" type="Area2D"]
+collision_layer = 4
+collision_mask = 2
 script = ExtResource("1_rlm82")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
