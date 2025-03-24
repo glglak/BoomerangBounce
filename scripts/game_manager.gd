@@ -56,6 +56,11 @@ func _ready():
 	# Make controls visible on all platforms
 	controls_container.visible = true
 	
+	# Connect button signals
+	left_button.connect("pressed", Callable(self, "_on_left_button_pressed"))
+	right_button.connect("pressed", Callable(self, "_on_right_button_pressed"))
+	jump_button.connect("pressed", Callable(self, "_on_jump_button_pressed"))
+	
 	# Load high score
 	load_high_score()
 	
@@ -65,12 +70,6 @@ func _ready():
 	obstacle_manager.connect("obstacle_passed", Callable(self, "_on_obstacle_passed"))
 	restart_button.connect("pressed", Callable(self, "restart_game"))
 	gameover_restart_button.connect("pressed", Callable(self, "restart_game"))
-	
-	# Connect player movement signals from Controls
-	controls_container.connect("move_left_pressed", Callable(player, "move_left"))
-	controls_container.connect("move_right_pressed", Callable(player, "move_right"))
-	controls_container.connect("jump_pressed", Callable(player, "try_jump"))
-	controls_container.connect("set_target_position", Callable(player, "set_target_position"))
 	
 	# Pass player reference to obstacle manager
 	obstacle_manager.set_player_reference(player)
@@ -98,6 +97,20 @@ func _process(delta):
 	
 	# Update game time (used for difficulty scaling)
 	game_time += delta
+
+func _on_left_button_pressed():
+	if game_active and player:
+		player.move_left()
+		player.try_jump()
+
+func _on_right_button_pressed():
+	if game_active and player:
+		player.move_right()
+		player.try_jump()
+
+func _on_jump_button_pressed():
+	if game_active and player:
+		player.try_jump()
 
 func _on_obstacle_passed():
 	# Increment score when an obstacle is passed
