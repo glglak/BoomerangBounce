@@ -12,7 +12,8 @@ func _ready():
 	# Connect the signal
 	body_entered.connect(_on_body_entered)
 	
-	# No scaling - use original size
+	# Ensure sprite has its original scale (no scaling)
+	$Sprite2D.scale = Vector2(1, 1)
 
 func _physics_process(delta):
 	# Rotate the obstacle
