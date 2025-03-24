@@ -38,6 +38,7 @@ var jump_cooldown: float = 0.2    # Required time between jumps (in seconds)
 # Reference nodes
 @onready var animation_player = $AnimationPlayer
 @onready var sprite = $Sprite2D
+@onready var collision_shape = $CollisionShape2D
 
 func _ready():
     # Check if we're on mobile
@@ -49,8 +50,10 @@ func _ready():
     # Force immediate position update
     _update_screen_metrics()
     
-    # Set up collision detection more reliably
-    $CollisionShape2D.shape.radius = 30 if is_mobile else 25
+    # Set up collision detection more reliably - using scale instead of modifying radius directly
+    if collision_shape:
+        var scale_factor = 1.2 if is_mobile else 1.0
+        collision_shape.scale = Vector2(scale_factor, scale_factor)
     
     # Make sure we're using the normal character
     set_character_state("normal")
