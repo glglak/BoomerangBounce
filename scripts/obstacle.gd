@@ -8,18 +8,20 @@ var speed = 300.0  # Movement speed (set by obstacle manager)
 var has_passed_player = false
 var player_x_position = 100  # Default player x position
 var is_mobile = false  # Will be set in _ready
+var has_passed_score_zone = false  # Track if we've already incremented score
 
 func _ready():
 	# Connect the signal
-	body_entered.connect(_on_body_entered)
+	if not body_entered.is_connected(_on_body_entered):
+		body_entered.connect(_on_body_entered)
 	
 	# Detect if running on mobile
 	is_mobile = OS.get_name() == "Android" or OS.get_name() == "iOS"
 	
 	# Make obstacles bigger, especially on mobile
-	var scale_factor = 1.25
+	var scale_factor = 1.5  # Make obstacles significantly larger
 	if is_mobile:
-		scale_factor = 1.4  # Even larger on mobile
+		scale_factor = 1.7  # Even larger on mobile
 	
 	# Apply scaling to sprite
 	$Sprite2D.scale = Vector2(scale_factor, scale_factor)
@@ -41,9 +43,10 @@ func _physics_process(delta):
 	# Ensure color stays consistent
 	$Sprite2D.modulate = Color.WHITE
 	
-	# Check if this obstacle has passed the player
-	if not has_passed_player and position.x < player_x_position - 50:
-		has_passed_player = true
+	# Check if this obstacle has passed the player and hasn't been counted yet
+	if not has_passed_score_zone and position.x < player_x_position - 50:
+		has_passed_score_zone = true  # Mark as counted
+		print("Obstacle passing player - emitting passed signal")
 		emit_signal("obstacle_passed")
 
 func set_speed(new_speed):
