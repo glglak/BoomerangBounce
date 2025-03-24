@@ -33,6 +33,7 @@ var game_time = 0.0
 var difficulty_factor = 0.0  # 0 to 1, increases over time
 var player_reference = null
 var screen_height = 960  # Default, will be updated
+var boomerang_spawn_chance = 0.3  # 30% chance of spawning a boomerang
 
 func _ready():
 	randomize()  # Initialize random seed
@@ -109,7 +110,7 @@ func _process(delta):
 		obstacle.position.x -= current_speed * delta
 		
 		# Check if obstacle is off-screen and should be removed
-		if obstacle.position.x < -50:
+		if obstacle.position.x < -100:  # Increased to ensure obstacles fully exit
 			obstacles_to_remove.append(obstacle)
 	
 	# Remove obstacles that are no longer needed
@@ -118,35 +119,35 @@ func _process(delta):
 		obstacle.queue_free()
 
 func spawn_obstacle():
-	# Decide which type of obstacle to spawn
-	# 0 = regular obstacle, 1 = ground obstacle, 2 = air obstacle, 3 = boomerang
-	var obstacle_type = randi() % 4
+	# Determine if we should spawn a boomerang (higher chance than before)
+	var should_spawn_boomerang = randf() < boomerang_spawn_chance
+	
 	var obstacle
 	
-	# Make sure boomerang gets spawned regularly (increased chance)
-	if obstacle_type == 3 and randf() > 0.5:  # 50% chance that it will stay as boomerang when selected
-		if boomerang_scene:
-			obstacle = boomerang_scene.instantiate()
-			print("Spawning boomerang obstacle")
-		else:
-			obstacle_type = 0  # Fallback if boomerang scene not available
-	
-	# Handle other obstacle types
-	if obstacle_type == 0 and obstacle_scene:
-		obstacle = obstacle_scene.instantiate()
-		print("Spawning regular obstacle")
-	elif obstacle_type == 1 and ground_obstacle_scene:
-		obstacle = ground_obstacle_scene.instantiate()
-		print("Spawning ground obstacle")
-	elif obstacle_type == 2 and air_obstacle_scene:
-		obstacle = air_obstacle_scene.instantiate()
-		print("Spawning air obstacle")
-	elif obstacle_type == 3 and boomerang_scene:
+	if should_spawn_boomerang and boomerang_scene:
+		# Spawn a boomerang
 		obstacle = boomerang_scene.instantiate()
 		print("Spawning boomerang obstacle")
 	else:
-		print("Failed to spawn obstacle - no valid scene available")
-		return  # No valid obstacle scene to spawn
+		# Decide which type of regular obstacle to spawn
+		# 0 = regular obstacle, 1 = ground obstacle, 2 = air obstacle
+		var obstacle_type = randi() % 3
+		
+		if obstacle_type == 0 and obstacle_scene:
+			obstacle = obstacle_scene.instantiate()
+			print("Spawning regular obstacle")
+		elif obstacle_type == 1 and ground_obstacle_scene:
+			obstacle = ground_obstacle_scene.instantiate()
+			print("Spawning ground obstacle")
+		elif obstacle_type == 2 and air_obstacle_scene:
+			obstacle = air_obstacle_scene.instantiate()
+			print("Spawning air obstacle")
+		elif obstacle_scene:  # Fallback to regular obstacle if chosen type isn't available
+			obstacle = obstacle_scene.instantiate()
+			print("Fallback to regular obstacle")
+		else:
+			print("Failed to spawn obstacle - no valid scene available")
+			return  # No valid obstacle scene to spawn
 	
 	add_child(obstacle)
 	
@@ -163,25 +164,38 @@ func spawn_obstacle():
 	active_obstacles.append(obstacle)
 	
 	# Position obstacle based on type
-	var lane = randi() % 3  # Pick a random lane (0, 1, or 2)
+	var screen_center_y = screen_height / 2
 	
 	if obstacle is Boomerang:
-		# Special handling for boomerang
-		obstacle.throw(Vector2(spawn_x_position, floor_y_position - 100), 1.0 + difficulty_factor * 0.5)
+		# Special handling for boomerang - position in middle of screen
+		obstacle.throw(Vector2(spawn_x_position, screen_center_y), 1.0 + difficulty_factor * 0.5)
 	else:
-		# Standard obstacle positioning
-		if obstacle_type == 1:  # Ground obstacle
-			obstacle.position.y = floor_y_position - 10  # Ground level
-		elif obstacle_type == 2:  # Air obstacle
-			obstacle.position.y = floor_y_position - 70  # Air level (requires a jump)
-		else:  # Default obstacle
-			obstacle.position.y = floor_y_position - 10  # Ground level
-			
+		# Random lane for standard obstacles
+		var lane = randi() % 3  # Pick a random lane (0, 1, or 2)
+		
+		# Position obstacle in middle of screen vertically
+		var obstacle_y = screen_center_y
+		
+		# Adjust based on obstacle type with some randomness to avoid all being at same height
+		var height_variance = randi() % 100 - 50  # Random -50 to +50 pixels
+		
+		if obstacle == ground_obstacle_scene:
+			obstacle_y = screen_center_y + 80 + height_variance  # Lower
+		elif obstacle == air_obstacle_scene:
+			obstacle_y = screen_center_y - 80 + height_variance  # Higher
+		else:
+			obstacle_y = screen_center_y + height_variance  # Middle with variance
+		
+		# Ensure the obstacle isn't too close to the top or bottom
+		obstacle_y = clamp(obstacle_y, 100, floor_y_position - 50)
+		
+		# Set position
+		obstacle.position.y = obstacle_y
 		obstacle.position.x = spawn_x_position
 		obstacle.position.x += lane_positions[lane] - 270  # Offset based on lane
 	
 	# As difficulty increases, sometimes spawn multiple obstacles at once
-	if difficulty_factor > 0.3 and randf() < difficulty_factor * 0.5:
+	if difficulty_factor > 0.3 and randf() < difficulty_factor * 0.4:
 		# Spawn a second obstacle in a different lane
 		var second_lane = (lane + 1 + randi() % 2) % 3  # Ensure different lane
 		var second_obstacle_type = randi() % 3  # Don't spawn a second boomerang
@@ -205,11 +219,20 @@ func spawn_obstacle():
 				
 			active_obstacles.append(second_obstacle)
 			
-			if second_obstacle_type == 1:  # Ground obstacle
-				second_obstacle.position.y = floor_y_position - 10
-			else:  # Air obstacle or default
-				second_obstacle.position.y = floor_y_position - 70
+			# Position second obstacle with different height
+			var second_obstacle_y = screen_center_y
+			var height_variance = randi() % 100 - 50
+			
+			if second_obstacle_type == 1:  # Ground-type obstacle
+				second_obstacle_y = screen_center_y + 80 + height_variance
+			elif second_obstacle_type == 2:  # Air-type obstacle
+				second_obstacle_y = screen_center_y - 80 + height_variance
+			else:
+				second_obstacle_y = screen_center_y + height_variance
 				
+			second_obstacle_y = clamp(second_obstacle_y, 100, floor_y_position - 50)
+			
+			second_obstacle.position.y = second_obstacle_y
 			second_obstacle.position.x = spawn_x_position
 			second_obstacle.position.x += lane_positions[second_lane] - 270
 
