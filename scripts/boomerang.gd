@@ -34,11 +34,12 @@ func _ready() -> void:
 	# Connect the body_entered signal
 	if not body_entered.is_connected(_on_body_entered):
 		body_entered.connect(_on_body_entered)
+		print("Connected boomerang body_entered signal")
 	
 	# Make boomerang larger for better visibility
-	var scale_factor = 2.0  # Even larger for visibility
+	var scale_factor = 2.5  # Even larger for visibility
 	if is_mobile:
-		scale_factor = 2.2  # Slightly larger on mobile
+		scale_factor = 2.8  # Slightly larger on mobile
 	
 	# Try to load the boomerang texture explicitly
 	boomerang_texture = load("res://assets/sprites/boomerang.svg")
@@ -97,6 +98,7 @@ func _physics_process(delta: float) -> void:
 		# Completed the full loop
 		reset()
 		emit_signal("completed_loop")
+		print("Boomerang completed loop - emitting signal")
 	
 	# Update position based on bezier curve or parabola
 	global_position = calculate_position(t)
@@ -136,7 +138,14 @@ func calculate_position(param: float) -> Vector2:
 
 func _on_body_entered(body: Node) -> void:
 	if body is Player and not has_hit_player:
-		# Player hit by boomerang - only hit once
+		# Player hit by boomerang - only hit once 
 		has_hit_player = true
-		print("Boomerang hit player!")
+		
+		# Give a brief visual indication
+		sprite.modulate = Color(1.0, 0.5, 0.5)  # Red tint on collision
+		
+		print("Boomerang hit player at position: " + str(global_position))
+		print("Player position: " + str(body.global_position))
+		
 		body.hit()
+		# No need to deactivate here as the game will reset
