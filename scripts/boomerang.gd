@@ -35,9 +35,9 @@ func _ready() -> void:
 		body_entered.connect(_on_body_entered)
 	
 	# Make boomerang larger for better visibility
-	var scale_factor = 1.6
+	var scale_factor = 2.0  # Even larger for visibility
 	if is_mobile:
-		scale_factor = 1.8
+		scale_factor = 2.2  # Slightly larger on mobile
 	
 	# Scale both the sprite and collision shape
 	sprite.scale = Vector2(scale_factor, scale_factor)
@@ -57,13 +57,13 @@ func _ready() -> void:
 	# Ensure sprite has no color changes
 	sprite.modulate = Color.WHITE
 	
-	print("Boomerang initialized")
+	print("Boomerang initialized with scale factor:", scale_factor)
 
 func _physics_process(delta: float) -> void:
 	if not is_active:
 		return
 		
-	# Rotate the boomerang
+	# Rotate the boomerang faster
 	sprite.rotation += rotation_speed * delta * 2 * PI
 	
 	# Ensure visibility and color stays consistent
@@ -123,4 +123,3 @@ func _on_body_entered(body: Node) -> void:
 		has_hit_player = true
 		print("Boomerang hit player!")
 		body.hit()
-		# No need to deactivate here as the game will reset
