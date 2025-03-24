@@ -21,7 +21,8 @@ signal obstacle_passed
 var lane_positions = [100, 270, 440]
 
 # Floor position for obstacles
-var floor_y_position: float = 900  # This will be updated dynamically
+var floor_y_position: float = 830  # Default, will be updated dynamically
+var is_mobile = false
 
 # Internal variables
 var active_obstacles = []
@@ -36,6 +37,9 @@ var screen_height = 960  # Default, will be updated
 func _ready():
 	randomize()  # Initialize random seed
 	
+	# Check if we're on mobile
+	is_mobile = OS.get_name() == "Android" or OS.get_name() == "iOS"
+	
 	# Wait a frame to ensure viewport size is correct
 	await get_tree().process_frame
 	update_screen_metrics()
@@ -45,8 +49,13 @@ func update_screen_metrics():
 	var viewport_rect = get_viewport_rect().size
 	screen_height = viewport_rect.y
 	
-	# Set floor position to be at the bottom of the screen
-	floor_y_position = screen_height - 50
+	# Set floor position to be above controls on mobile
+	var floor_offset = 30
+	if is_mobile:
+		floor_offset = 120  # Higher offset on mobile to account for control panel
+	
+	# Set floor position based on screen height
+	floor_y_position = screen_height - floor_offset
 
 func set_player_reference(player):
 	player_reference = player
@@ -153,7 +162,7 @@ func spawn_obstacle():
 			obstacle.position.y = floor_y_position - 70  # Air level (requires a jump)
 		else:  # Default obstacle
 			obstacle.position.y = floor_y_position - 10  # Ground level
-		
+			
 		obstacle.position.x = spawn_x_position
 		obstacle.position.x += lane_positions[lane] - 270  # Offset based on lane
 	
