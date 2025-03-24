@@ -21,6 +21,7 @@ var is_active: bool = false
 var current_speed_multiplier: float = 1.0
 var is_mobile = false
 var has_hit_player = false  # Track if we've already hit the player
+var boomerang_texture = null
 
 # References
 @onready var sprite: Sprite2D = $Sprite2D
@@ -39,6 +40,22 @@ func _ready() -> void:
 	if is_mobile:
 		scale_factor = 2.2  # Slightly larger on mobile
 	
+	# Try to load the boomerang texture explicitly
+	boomerang_texture = load("res://assets/sprites/boomerang.svg")
+	if boomerang_texture != null:
+		sprite.texture = boomerang_texture
+		print("Successfully loaded boomerang texture")
+	else:
+		print("ERROR: Could not load boomerang texture from assets/sprites/boomerang.svg")
+		
+		# Try a second path
+		boomerang_texture = load("res://assets/boomerang.svg")
+		if boomerang_texture != null:
+			sprite.texture = boomerang_texture
+			print("Successfully loaded boomerang texture from alternative path")
+		else:
+			print("ERROR: Could not load boomerang texture from assets/boomerang.svg either")
+	
 	# Scale both the sprite and collision shape
 	sprite.scale = Vector2(scale_factor, scale_factor)
 	if collision_shape:
@@ -54,7 +71,7 @@ func _ready() -> void:
 	monitorable = true
 	has_hit_player = false
 	
-	# Ensure sprite has no color changes
+	# Ensure sprite has no color changes and is visible
 	sprite.modulate = Color.WHITE
 	
 	print("Boomerang initialized with scale factor:", scale_factor)
