@@ -37,6 +37,9 @@ func _ready() -> void:
 	# Make sure collision is enabled
 	monitoring = true
 	monitorable = true
+	
+	# Ensure sprite has its original scale
+	sprite.scale = Vector2(1, 1)
 
 func _physics_process(delta: float) -> void:
 	if not is_active:
