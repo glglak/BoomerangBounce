@@ -7,6 +7,7 @@ signal obstacle_passed
 @export var obstacle_scene: PackedScene
 @export var ground_obstacle_scene: PackedScene
 @export var air_obstacle_scene: PackedScene
+@export var boomerang_scene: PackedScene  # Added boomerang scene reference
 
 # Obstacle settings
 @export var spawn_x_position = 600.0  # Spawn just off-screen to the right
@@ -20,7 +21,7 @@ signal obstacle_passed
 var lane_positions = [100, 270, 440]
 
 # Floor position for obstacles
-var floor_level = 870  # Updated to match new floor position
+var floor_y_position: float = 900  # This will be updated dynamically
 
 # Internal variables
 var active_obstacles = []
@@ -30,14 +31,30 @@ var is_active = false
 var game_time = 0.0
 var difficulty_factor = 0.0  # 0 to 1, increases over time
 var player_reference = null
+var screen_height = 960  # Default, will be updated
 
 func _ready():
 	randomize()  # Initialize random seed
+	
+	# Wait a frame to ensure viewport size is correct
+	await get_tree().process_frame
+	update_screen_metrics()
+
+func update_screen_metrics():
+	# Get the current viewport size
+	var viewport_rect = get_viewport_rect().size
+	screen_height = viewport_rect.y
+	
+	# Set floor position to be at the bottom of the screen
+	floor_y_position = screen_height - 50
 
 func set_player_reference(player):
 	player_reference = player
 
 func start():
+	# Update screen metrics first
+	update_screen_metrics()
+	
 	# Clear any existing obstacles
 	for obstacle in active_obstacles:
 		obstacle.queue_free()
@@ -93,25 +110,31 @@ func _process(delta):
 
 func spawn_obstacle():
 	# Decide which type of obstacle to spawn
-	var obstacle_type = randi() % 3  # 0 = ground, 1 = air, 2 = random lane
+	# 0 = regular obstacle, 1 = ground obstacle, 2 = air obstacle, 3 = boomerang
+	var obstacle_type = randi() % 4
 	var obstacle
 	
-	if obstacle_type == 0 and ground_obstacle_scene:
-		obstacle = ground_obstacle_scene.instantiate()
-	elif obstacle_type == 1 and air_obstacle_scene:
-		obstacle = air_obstacle_scene.instantiate()
-	elif obstacle_scene:
+	if obstacle_type == 0 and obstacle_scene:
 		obstacle = obstacle_scene.instantiate()
+	elif obstacle_type == 1 and ground_obstacle_scene:
+		obstacle = ground_obstacle_scene.instantiate()
+	elif obstacle_type == 2 and air_obstacle_scene:
+		obstacle = air_obstacle_scene.instantiate()
+	elif obstacle_type == 3 and boomerang_scene:
+		obstacle = boomerang_scene.instantiate()
 	else:
 		return  # No valid obstacle scene to spawn
 	
 	add_child(obstacle)
 	
 	# Connect obstacle's passed signal to our signal
-	obstacle.connect("obstacle_passed", _on_obstacle_passed)
+	if obstacle.has_signal("obstacle_passed"):
+		obstacle.connect("obstacle_passed", _on_obstacle_passed)
+	elif obstacle.has_signal("completed_loop") and obstacle is Boomerang:
+		obstacle.connect("completed_loop", _on_obstacle_passed)
 	
 	# Inform obstacle of player's x position
-	if player_reference:
+	if player_reference and obstacle.has_method("set_player_position"):
 		obstacle.set_player_position(player_reference.global_position.x)
 	
 	active_obstacles.append(obstacle)
@@ -119,16 +142,18 @@ func spawn_obstacle():
 	# Position obstacle based on type
 	var lane = randi() % 3  # Pick a random lane (0, 1, or 2)
 	
-	if obstacle_type == 0:  # Ground obstacle
-		obstacle.position.y = floor_level - 10  # Ground level
-		obstacle.position.x = spawn_x_position
-		obstacle.position.x += lane_positions[lane] - 270  # Offset based on lane
-	elif obstacle_type == 1:  # Air obstacle (requires jumping)
-		obstacle.position.y = floor_level - 70  # Air level (requires a jump)
-		obstacle.position.x = spawn_x_position
-		obstacle.position.x += lane_positions[lane] - 270  # Offset based on lane
-	else:  # Random lane obstacle
-		obstacle.position.y = floor_level - 10  # Ground level
+	if obstacle is Boomerang:
+		# Special handling for boomerang
+		obstacle.throw(Vector2(spawn_x_position, floor_y_position - 100), 1.0 + difficulty_factor * 0.5)
+	else:
+		# Standard obstacle positioning
+		if obstacle_type == 1:  # Ground obstacle
+			obstacle.position.y = floor_y_position - 10  # Ground level
+		elif obstacle_type == 2:  # Air obstacle
+			obstacle.position.y = floor_y_position - 70  # Air level (requires a jump)
+		else:  # Default obstacle
+			obstacle.position.y = floor_y_position - 10  # Ground level
+		
 		obstacle.position.x = spawn_x_position
 		obstacle.position.x += lane_positions[lane] - 270  # Offset based on lane
 	
@@ -136,23 +161,32 @@ func spawn_obstacle():
 	if difficulty_factor > 0.3 and randf() < difficulty_factor * 0.5:
 		# Spawn a second obstacle in a different lane
 		var second_lane = (lane + 1 + randi() % 2) % 3  # Ensure different lane
+		var second_obstacle_type = randi() % 3  # Don't spawn a second boomerang
 		var second_obstacle
 		
-		if randi() % 2 == 0 and ground_obstacle_scene:
+		if second_obstacle_type == 0 and obstacle_scene:
+			second_obstacle = obstacle_scene.instantiate()
+		elif second_obstacle_type == 1 and ground_obstacle_scene:
 			second_obstacle = ground_obstacle_scene.instantiate()
-			second_obstacle.position.y = floor_level - 10
 		elif air_obstacle_scene:
 			second_obstacle = air_obstacle_scene.instantiate()
-			second_obstacle.position.y = floor_level - 70
 			
 		if second_obstacle:
 			add_child(second_obstacle)
-			second_obstacle.connect("obstacle_passed", _on_obstacle_passed)
 			
-			if player_reference:
+			if second_obstacle.has_signal("obstacle_passed"):
+				second_obstacle.connect("obstacle_passed", _on_obstacle_passed)
+			
+			if player_reference and second_obstacle.has_method("set_player_position"):
 				second_obstacle.set_player_position(player_reference.global_position.x)
 				
 			active_obstacles.append(second_obstacle)
+			
+			if second_obstacle_type == 1:  # Ground obstacle
+				second_obstacle.position.y = floor_y_position - 10
+			else:  # Air obstacle or default
+				second_obstacle.position.y = floor_y_position - 70
+				
 			second_obstacle.position.x = spawn_x_position
 			second_obstacle.position.x += lane_positions[second_lane] - 270
 
