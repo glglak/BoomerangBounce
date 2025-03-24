@@ -24,15 +24,11 @@ func _ready():
 	# Apply scaling to sprite
 	$Sprite2D.scale = Vector2(scale_factor, scale_factor)
 	
-	# Make sure collision shape is appropriately sized
+	# We'll handle collision shapes more safely to avoid errors
+	# Instead of modifying collision shapes directly, we'll just scale the node
 	if has_node("CollisionShape2D"):
-		var collision_shape = $CollisionShape2D
-		
-		# Handle different shape types correctly
-		if collision_shape.shape is CircleShape2D:
-			collision_shape.shape.radius *= scale_factor
-		elif collision_shape.shape is RectangleShape2D:
-			collision_shape.shape.size *= scale_factor
+		# Scale the entire collision shape node instead of modifying properties
+		$CollisionShape2D.scale = Vector2(scale_factor, scale_factor)
 	
 	# Ensure the sprite color is white (no tinting)
 	$Sprite2D.modulate = Color.WHITE
