@@ -121,7 +121,7 @@ func _process(delta):
 func spawn_obstacle():
 	# Determine if we should spawn a boomerang (higher chance than before)
 	var should_spawn_boomerang = randf() < boomerang_spawn_chance
-	
+	var lane = randi() % 3  # Pick a random lane (0, 1, or 2)
 	var obstacle
 	
 	if should_spawn_boomerang and boomerang_scene:
@@ -170,18 +170,15 @@ func spawn_obstacle():
 		# Special handling for boomerang - position in middle of screen
 		obstacle.throw(Vector2(spawn_x_position, screen_center_y), 1.0 + difficulty_factor * 0.5)
 	else:
-		# Random lane for standard obstacles
-		var lane = randi() % 3  # Pick a random lane (0, 1, or 2)
-		
 		# Position obstacle in middle of screen vertically
 		var obstacle_y = screen_center_y
 		
 		# Adjust based on obstacle type with some randomness to avoid all being at same height
 		var height_variance = randi() % 100 - 50  # Random -50 to +50 pixels
 		
-		if obstacle == ground_obstacle_scene:
+		if obstacle.get_meta("type", "") == "ground":
 			obstacle_y = screen_center_y + 80 + height_variance  # Lower
-		elif obstacle == air_obstacle_scene:
+		elif obstacle.get_meta("type", "") == "air":
 			obstacle_y = screen_center_y - 80 + height_variance  # Higher
 		else:
 			obstacle_y = screen_center_y + height_variance  # Middle with variance
