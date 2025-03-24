@@ -1,23 +1,23 @@
 [gd_scene load_steps=20 format="3"]
 
 [ext_resource type="Script" path="res://scripts/game_manager.gd" id="1_6l7x2"]
-[ext_resource type="Texture2D" path="res://assets/sprites/background1.svg" id="2_mak7p"]
-[ext_resource type="Texture2D" path="res://assets/sprites/background2.svg" id="3_5whlv"]
-[ext_resource type="Texture2D" path="res://assets/sprites/background3.svg" id="4_xc7w8"]
-[ext_resource type="Texture2D" path="res://assets/sprites/background4.svg" id="5_fpxd2"]
-[ext_resource type="Texture2D" path="res://assets/sprites/background5.svg" id="6_x8kmv"]
+[ext_resource type="Texture2D" uid="uid://bkbsgjcn67u1p" path="res://assets/sprites/background1.svg" id="2_mak7p"]
+[ext_resource type="Texture2D" uid="uid://cgv8qbm5kqcxf" path="res://assets/sprites/background2.svg" id="3_5whlv"]
+[ext_resource type="Texture2D" uid="uid://coycsvucn76g3" path="res://assets/sprites/background3.svg" id="4_xc7w8"]
+[ext_resource type="Texture2D" uid="uid://djd1h3qc4p3di" path="res://assets/sprites/background4.svg" id="5_fpxd2"]
+[ext_resource type="Texture2D" uid="uid://dmpvvfxqndfce" path="res://assets/sprites/background5.svg" id="6_x8kmv"]
 [ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="7_rh6mb"]
 [ext_resource type="Script" path="res://scripts/obstacle_manager.gd" id="8_r8kic"]
 [ext_resource type="PackedScene" path="res://scenes/Obstacle.tscn" id="9_cvnnp"]
 [ext_resource type="PackedScene" path="res://scenes/GroundObstacle.tscn" id="10_k2pgj"]
 [ext_resource type="PackedScene" path="res://scenes/AirObstacle.tscn" id="11_2tl64"]
 [ext_resource type="PackedScene" path="res://scenes/Boomerang.tscn" id="12_27ow7"]
-[ext_resource type="AudioStream" path="res://assets/audio/background.mp3" id="13_cde6p"]
-[ext_resource type="AudioStream" path="res://assets/audio/jump.mp3" id="14_8qsj5"]
-[ext_resource type="AudioStream" path="res://assets/audio/score.mp3" id="15_3rkqw"]
-[ext_resource type="AudioStream" path="res://assets/audio/milestone5.mp3" id="16_5sgnt"]
-[ext_resource type="AudioStream" path="res://assets/audio/wesopeso.mp3" id="17_a0yg3"]
-[ext_resource type="AudioStream" path="res://assets/audio/game-over.mp3" id="18_6aek6"]
+[ext_resource type="AudioStream" uid="uid://0jm6mhdqw7kp" path="res://assets/audio/background.mp3" id="13_cde6p"]
+[ext_resource type="AudioStream" uid="uid://cdw5e4g5o11ao" path="res://assets/audio/jump.mp3" id="14_8qsj5"]
+[ext_resource type="AudioStream" uid="uid://ckqwk4xh14v5h" path="res://assets/audio/score.mp3" id="15_3rkqw"]
+[ext_resource type="AudioStream" uid="uid://c12wr37bupg43" path="res://assets/audio/milestone5.mp3" id="16_5sgnt"]
+[ext_resource type="AudioStream" uid="uid://c53rpfswvlg5p" path="res://assets/audio/wesopeso.mp3" id="17_a0yg3"]
+[ext_resource type="AudioStream" uid="uid://cq0r8lqo38xni" path="res://assets/audio/game-over.mp3" id="18_6aek6"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_h1f7c"]
 size = Vector2(600, 30)
@@ -98,7 +98,7 @@ collision_mask = 2
 [node name="CollisionShape2D" type="CollisionShape2D" parent="GroundCollision"]
 shape = SubResource("RectangleShape2D_h1f7c")
 
-[node name="Player" parent="." instance=ExtResource(7_rh6mb")]
+[node name="Player" parent="." instance=ExtResource("7_rh6mb")]
 position = Vector2(270, 930)
 
 [node name="ObstacleManager" type="Node2D" parent="."]
