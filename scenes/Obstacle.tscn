@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format="3" uid="uid://di5cpcmm3pq3d"]
 
 [ext_resource type="Script" path="res://scripts/obstacle.gd" id="1_pyhfx"]
-[ext_resource type="Texture2D" uid="uid://cwxgm20qwgktw" path="res://assets/sprites/obstacle.svg" id="2_yykhd"]
+[ext_resource type="Texture2D" uid="uid://85pluywwhul8" path="res://assets/sprites/obstacle.svg" id="2_yykhd"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_rh6lg"]
 radius = 24.0
