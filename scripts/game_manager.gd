@@ -55,10 +55,10 @@ func _ready():
 	# Set up controls based on platform
 	setup_controls()
 	
-	# Connect button signals
-	jump_button.connect("pressed", Callable(self, "_on_jump_button_pressed"))
-	restart_button.connect("pressed", Callable(self, "restart_game"))
-	gameover_restart_button.connect("pressed", Callable(self, "restart_game"))
+	# Manually connect button signals to ensure they work
+	restart_button.pressed.connect(restart_game)
+	gameover_restart_button.pressed.connect(restart_game)
+	jump_button.pressed.connect(_on_jump_button_pressed)
 	
 	# Load high score
 	load_high_score()
@@ -153,7 +153,10 @@ func start_game():
 	update_score_display()
 	update_high_score_display()
 
+# This is the function that gets called both from the UI button and the keyboard R key
 func restart_game():
+	print("Restart game called!")  # Debug info
+	
 	# Stop any playing sounds
 	if game_over_sound and game_over_sound.playing:
 		game_over_sound.stop()
