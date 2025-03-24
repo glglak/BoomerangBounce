@@ -19,13 +19,29 @@ var t: float = 0.0  # Parameter to travel along path (0 to 1)
 var is_returning: bool = false
 var is_active: bool = false
 var current_speed_multiplier: float = 1.0
+var is_mobile = false
 
 # References
 @onready var sprite: Sprite2D = $Sprite2D
+@onready var collision_shape = $CollisionShape2D
 
 func _ready() -> void:
+	# Check if running on mobile
+	is_mobile = OS.get_name() == "Android" or OS.get_name() == "iOS"
+	
 	# Connect the body_entered signal
-	connect("body_entered", _on_body_entered)
+	if not body_entered.is_connected(_on_body_entered):
+		body_entered.connect(_on_body_entered)
+	
+	# Make boomerang larger on mobile
+	var scale_factor = 1.2
+	if is_mobile:
+		scale_factor = 1.4
+	
+	# Scale both the sprite and collision shape
+	sprite.scale = Vector2(scale_factor, scale_factor)
+	if collision_shape:
+		collision_shape.scale = Vector2(scale_factor, scale_factor)
 	
 	# Initialize starting position
 	initial_position = global_position
@@ -36,8 +52,7 @@ func _ready() -> void:
 	monitoring = true
 	monitorable = true
 	
-	# Ensure sprite has its original scale and no color changes
-	sprite.scale = Vector2(1, 1)
+	# Ensure sprite has no color changes
 	sprite.modulate = Color.WHITE
 
 func _physics_process(delta: float) -> void:
@@ -98,5 +113,6 @@ func calculate_position(param: float) -> Vector2:
 func _on_body_entered(body: Node) -> void:
 	if body is Player:
 		# Player hit by boomerang
+		print("Boomerang hit player!")
 		body.hit()
 		# No need to deactivate here as the game will reset
