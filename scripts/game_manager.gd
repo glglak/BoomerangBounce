@@ -46,8 +46,8 @@ func _ready():
 	randomize()
 	
 	# Force portrait orientation for mobile
-	if OS.get_name() == "Android" or OS.get_name() == "iOS":
-		is_mobile = true
+	is_mobile = OS.get_name() == "Android" or OS.get_name() == "iOS"
+	if is_mobile:
 		# Use explicit screen orientation setting - 1 is portrait
 		DisplayServer.screen_set_orientation(DisplayServer.SCREEN_PORTRAIT)
 		print("Setting screen orientation to portrait")
@@ -55,18 +55,8 @@ func _ready():
 	# Set up controls based on platform
 	setup_controls()
 	
-	# Connect button signals using direct connection approach for better compatibility
-	# We'll use unified handling for restart functionality
-	if restart_button:
-		restart_button.pressed.disconnect(_on_pressed) if restart_button.pressed.is_connected(_on_pressed) else null
-		restart_button.pressed.connect(func(): restart_game())
-	
-	if gameover_restart_button:
-		gameover_restart_button.pressed.disconnect(_on_pressed) if gameover_restart_button.pressed.is_connected(_on_pressed) else null
-		gameover_restart_button.pressed.connect(func(): restart_game())
-	
-	if jump_button:
-		jump_button.pressed.connect(_on_jump_button_pressed)
+	# Connect button signals directly - this is the key fix for button functionality
+	direct_connect_button_signals()
 	
 	# Load high score
 	load_high_score()
@@ -94,6 +84,27 @@ func _ready():
 	await get_tree().create_timer(0.5).timeout
 	start_game()
 
+func direct_connect_button_signals():
+	# This method ensures buttons are properly connected with direct callable references
+	
+	# Disconnect any existing signals to prevent duplicates
+	if restart_button:
+		if restart_button.pressed.is_connected(Callable(self, "restart_game")):
+			restart_button.pressed.disconnect(Callable(self, "restart_game"))
+		restart_button.pressed.connect(Callable(self, "restart_game"))
+	
+	if gameover_restart_button:
+		if gameover_restart_button.pressed.is_connected(Callable(self, "restart_game")):
+			gameover_restart_button.pressed.disconnect(Callable(self, "restart_game"))
+		gameover_restart_button.pressed.connect(Callable(self, "restart_game"))
+	
+	if jump_button:
+		if jump_button.pressed.is_connected(Callable(self, "_on_jump_button_pressed")):
+			jump_button.pressed.disconnect(Callable(self, "_on_jump_button_pressed"))
+		jump_button.pressed.connect(Callable(self, "_on_jump_button_pressed"))
+	
+	print("Button signals directly connected")
+
 func setup_controls():
 	# Make controls visible and positioned properly for mobile
 	controls_container.visible = true
@@ -106,13 +117,29 @@ func setup_controls():
 	
 	# Adjust button appearance and position based on platform
 	if restart_button:
+		# Enable button processing
+		restart_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		restart_button.mouse_filter = Control.MOUSE_FILTER_STOP
+		
 		# Ensure the restart button is positioned correctly for the device
 		if is_mobile:
 			# For mobile, make larger touch targets
-			restart_button.custom_minimum_size = Vector2(100, 60) # Larger button for touch
+			restart_button.custom_minimum_size = Vector2(120, 60)  # Larger button for touch
 		else:
 			# For desktop, standard size
-			restart_button.custom_minimum_size = Vector2(80, 40)
+			restart_button.custom_minimum_size = Vector2(100, 40)
+	
+	if gameover_restart_button:
+		# Enable button processing
+		gameover_restart_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		gameover_restart_button.mouse_filter = Control.MOUSE_FILTER_STOP
+		
+		# Make button larger on mobile
+		if is_mobile:
+			gameover_restart_button.custom_minimum_size = Vector2(180, 70)
+	
+	if jump_button and is_mobile:
+		jump_button.custom_minimum_size = Vector2(120, 60)
 
 func _process(delta):
 	if not game_active:
@@ -128,6 +155,7 @@ func _process(delta):
 		_on_jump_button_pressed()
 
 func _on_jump_button_pressed():
+	print("Jump button pressed function called")
 	if game_active and player:
 		player.try_jump()
 
@@ -175,6 +203,17 @@ func start_game():
 func restart_game():
 	print("Restart game called!")  # Debug info
 	
+	# Visual feedback for mobile
+	if is_mobile:
+		if game_over_panel.visible and gameover_restart_button:
+			gameover_restart_button.modulate = Color(0.8, 0.8, 0.8)
+			await get_tree().create_timer(0.1).timeout
+			gameover_restart_button.modulate = Color(1, 1, 1)
+		elif restart_button:
+			restart_button.modulate = Color(0.8, 0.8, 0.8)
+			await get_tree().create_timer(0.1).timeout
+			restart_button.modulate = Color(1, 1, 1)
+	
 	# Stop any playing sounds
 	if game_over_sound and game_over_sound.playing:
 		game_over_sound.stop()
@@ -184,10 +223,6 @@ func restart_game():
 		wesopeso_sound.stop()
 		
 	start_game()
-
-# Empty function to be compatible with Button.pressed.disconnect
-func _on_pressed():
-	pass
 
 func _on_player_hit():
 	# Player hit an obstacle - game over
@@ -284,9 +319,10 @@ func _unhandled_input(event):
 	# Handle raw screen touches for jumping in direction
 	if event is InputEventScreenTouch and event.pressed and game_active and player:
 		var screen_width = get_viewport().size.x
+		var screen_height = get_viewport().size.y
 		
 		# Only handle touch events in the game area (not on UI controls)
-		if event.position.y < get_viewport().size.y - 120:  # Above control area
+		if event.position.y < screen_height - 150:  # Above control area
 			if event.position.x < screen_width / 2:
 				# Left side jump
 				player.move_left()
@@ -298,8 +334,9 @@ func _unhandled_input(event):
 	
 	# Support restarting via keyboard or touch on game over
 	elif event is InputEventScreenTouch and event.pressed and not game_active:
-		# Check if touch is not on a UI element (like the restart button)
-		var restart_button_rect = gameover_restart_button.get_global_rect() if gameover_restart_button else Rect2()
-		if not restart_button_rect.has_point(event.position):
-			# Only restart if touching outside of UI elements
-			restart_game()
+		if game_over_panel.visible:
+			# Check if touch is not on the restart button to avoid double triggers
+			var restart_button_rect = gameover_restart_button.get_global_rect() if gameover_restart_button else Rect2()
+			if not restart_button_rect.has_point(event.position):
+				# Only restart if touching outside of UI elements
+				restart_game()
