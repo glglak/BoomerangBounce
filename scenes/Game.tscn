@@ -99,7 +99,7 @@ collision_mask = 2
 shape = SubResource("RectangleShape2D_h1f7c")
 
 [node name="Player" parent="." instance=ExtResource("7_rh6mb")]
-position = Vector2(270, 930)
+position = Vector2(270, 830)
 
 [node name="ObstacleManager" type="Node2D" parent="."]
 script = ExtResource("8_r8kic")
@@ -169,13 +169,13 @@ theme_override_font_sizes/font_size = 16
 text = "Restart"
 
 [node name="Lane1Marker" type="Marker2D" parent="."]
-position = Vector2(100, 930)
+position = Vector2(100, 830)
 
 [node name="Lane2Marker" type="Marker2D" parent="."]
-position = Vector2(270, 930)
+position = Vector2(270, 830)
 
 [node name="Lane3Marker" type="Marker2D" parent="."]
-position = Vector2(440, 930)
+position = Vector2(440, 830)
 
 [node name="GameOverPanel" type="Panel" parent="UI"]
 visible = false
@@ -307,25 +307,25 @@ grow_vertical = 2
 [node name="Lane1" type="ColorRect" parent="LaneVisuals"]
 layout_mode = 0
 offset_left = 90.0
-offset_top = 930.0
+offset_top = 830.0
 offset_right = 110.0
-offset_bottom = 940.0
+offset_bottom = 840.0
 color = Color(0.8, 0.8, 0.8, 0.5)
 
 [node name="Lane2" type="ColorRect" parent="LaneVisuals"]
 layout_mode = 0
 offset_left = 260.0
-offset_top = 930.0
+offset_top = 830.0
 offset_right = 280.0
-offset_bottom = 940.0
+offset_bottom = 840.0
 color = Color(0.8, 0.8, 0.8, 0.5)
 
 [node name="Lane3" type="ColorRect" parent="LaneVisuals"]
 layout_mode = 0
 offset_left = 430.0
-offset_top = 930.0
+offset_top = 830.0
 offset_right = 450.0
-offset_bottom = 940.0
+offset_bottom = 840.0
 color = Color(0.8, 0.8, 0.8, 0.5)
 
 [node name="Audio" type="Node" parent="."]
