@@ -21,12 +21,16 @@ var is_jumping = false
 var has_double_jumped = false
 var is_dead = false
 var floor_y_position: float
+var is_mobile = false
 
 # Reference nodes
 @onready var animation_player = $AnimationPlayer
 @onready var sprite = $Sprite2D
 
 func _ready():
+	# Check if we're on mobile
+	is_mobile = OS.get_name() == "Android" or OS.get_name() == "iOS"
+	
 	# Wait a frame to ensure viewport size is correct
 	await get_tree().process_frame
 	
@@ -38,8 +42,14 @@ func _update_screen_metrics():
 	var viewport_rect = get_viewport_rect().size
 	screen_width = viewport_rect.x
 	
-	# Set floor position to absolute bottom of screen with a small margin for ground
-	floor_y_position = viewport_rect.y - 30  # Very close to bottom of screen
+	# Set floor position based on platform - use a bigger offset on mobile for controls
+	var floor_offset = 30
+	if is_mobile:
+		# On mobile, position higher to avoid controls at bottom
+		floor_offset = 120  # Higher offset to stay above control panel
+	
+	# Calculate floor position to be above the bottom of the screen
+	floor_y_position = viewport_rect.y - floor_offset
 	
 	# Start in the middle of the screen
 	target_x_position = screen_width / 2
@@ -58,7 +68,7 @@ func _physics_process(delta):
 	
 	# First, check if the screen dimensions have changed
 	var current_viewport_rect = get_viewport_rect().size
-	if abs(current_viewport_rect.x - screen_width) > 10 or abs(current_viewport_rect.y - floor_y_position - 30) > 10:
+	if abs(current_viewport_rect.x - screen_width) > 10 or abs(current_viewport_rect.y - floor_y_position - (is_mobile ? 120 : 30)) > 10:
 		_update_screen_metrics()
 	
 	# Apply gravity
