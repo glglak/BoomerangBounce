@@ -42,7 +42,7 @@ func _create_ground_segment() -> Node2D:
 	sprite.texture = ground_texture
 	sprite.position.y = ground_height / 2
 	sprite.scale = Vector2(ground_width / ground_texture.get_width(), 
-	                       ground_height / ground_texture.get_height())
+						   ground_height / ground_texture.get_height())
 	segment.add_child(sprite)
 	
 	# Add collision
