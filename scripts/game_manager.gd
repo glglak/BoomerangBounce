@@ -57,6 +57,8 @@ func _ready():
 	
 	# Connect button signals
 	jump_button.connect("pressed", Callable(self, "_on_jump_button_pressed"))
+	restart_button.connect("pressed", Callable(self, "restart_game"))
+	gameover_restart_button.connect("pressed", Callable(self, "restart_game"))
 	
 	# Load high score
 	load_high_score()
@@ -65,8 +67,6 @@ func _ready():
 	player.connect("player_hit", Callable(self, "_on_player_hit"))
 	player.connect("jump_performed", Callable(self, "_on_player_jump"))
 	obstacle_manager.connect("obstacle_passed", Callable(self, "_on_obstacle_passed"))
-	restart_button.connect("pressed", Callable(self, "restart_game"))
-	gameover_restart_button.connect("pressed", Callable(self, "restart_game"))
 	
 	# Pass player reference to obstacle manager
 	obstacle_manager.set_player_reference(player)
@@ -257,14 +257,16 @@ func load_high_score():
 # Function for input events directly from the screen
 func _unhandled_input(event):
 	# Handle raw screen touches for jumping in direction
-	if is_mobile and event is InputEventScreenTouch and event.pressed and game_active:
+	if event is InputEventScreenTouch and event.pressed and game_active and player:
 		var screen_width = get_viewport().size.x
 		
 		# Only handle touch events in the game area (not on UI controls)
 		if event.position.y < get_viewport().size.y - 120:  # Above control area
 			if event.position.x < screen_width / 2:
-				player.set_target_position(max(player.global_position.x - 170, player.screen_margin)) 
+				# Left side jump
+				player.move_left()
 				player.try_jump()
 			else:
-				player.set_target_position(min(player.global_position.x + 170, screen_width - player.screen_margin))
+				# Right side jump
+				player.move_right()
 				player.try_jump()
