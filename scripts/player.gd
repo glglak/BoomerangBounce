@@ -20,9 +20,10 @@ var jumping_to_position: bool = false  # Track if we're in a directional jump
 # Character swap properties
 var character_states = {
     "normal": "res://assets/player.svg",  # Default character
-    "hit": "res://assets/player_hit.svg"  # Character after being hit (you'll need to provide this file)
+    "hit": "res://assets/player_hit.svg"  # Character after being hit
 }
 var current_character_state = "normal"
+var hit_texture_loaded = false
 
 # State variables
 var is_jumping = false
@@ -57,6 +58,23 @@ func _ready():
     
     # Make sure we're using the normal character
     set_character_state("normal")
+    
+    # Preload hit texture to avoid loading delay when hit
+    preload_hit_texture()
+
+func preload_hit_texture():
+    # Preload the hit texture to avoid loading delay when needed
+    if character_states.has("hit"):
+        var texture_path = character_states["hit"]
+        var texture = load(texture_path)
+        if texture != null:
+            hit_texture_loaded = true
+            print("Hit texture preloaded successfully")
+        else:
+            print("WARNING: Could not preload hit texture: " + texture_path)
+            print("Creating default hit texture")
+            # If the texture doesn't exist, use the normal texture with a red tint for hit state
+            character_states["hit"] = character_states["normal"]
 
 func _update_screen_metrics():
     # Get screen dimensions
@@ -173,8 +191,18 @@ func set_character_state(state: String):
         if texture != null:
             sprite.texture = texture
             print("Changed character state to: " + state)
+            
+            # Apply red tint for hit state if using the same texture
+            if state == "hit" and not hit_texture_loaded:
+                sprite.modulate = Color(1.0, 0.5, 0.5, 1.0)  # Red tint
+            else:
+                sprite.modulate = Color.WHITE  # Normal color
         else:
             push_error("Failed to load texture: " + texture_path)
+            
+            # Fallback for hit state - use red tint
+            if state == "hit":
+                sprite.modulate = Color(1.0, 0.5, 0.5, 1.0)  # Red tint
 
 # Set target position directly (used for touch controls)
 func set_target_position(pos_x: float):
@@ -259,6 +287,8 @@ func hit():
     if is_dead:
         return
     
+    print("Player hit! Changing character state to hit")
+    
     # Change character to hit state
     set_character_state("hit")
     
@@ -270,6 +300,8 @@ func hit():
     emit_signal("player_hit")
 
 func reset():
+    print("Resetting player to normal state")
+    
     # Change back to normal character state
     set_character_state("normal")
     
