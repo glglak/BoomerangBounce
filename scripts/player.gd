@@ -17,6 +17,12 @@ var jumping_to_position: bool = false  # Track if we're in a directional jump
 @export var double_jump_force: float = -1300.0  # Much stronger double jump
 @export var triple_jump_force: float = -1500.0  # Extremely strong triple jump
 
+# Mobile-specific parameters
+var mobile_jump_force_multiplier = 1.2  # Stronger jumps on mobile
+var mobile_double_jump_force_multiplier = 1.3
+var mobile_triple_jump_force_multiplier = 1.4
+var mobile_jump_horizontal_distance = 0.25  # As percentage of screen width
+
 # Character swap properties
 var character_states = {
     "normal": "res://assets/sprites/player.svg",  # Default character
@@ -36,6 +42,7 @@ var floor_y_position: float = 830.0  # Default value
 var is_mobile = false
 var last_jump_time: float = 0.0  # Track the last time a jump was performed
 var jump_cooldown: float = 0.2    # Required time between jumps (in seconds)
+var last_touch_position: Vector2 = Vector2.ZERO
 
 # Reference nodes
 @onready var animation_player = $AnimationPlayer
@@ -62,6 +69,13 @@ func _ready():
     
     # Make sure we're using the normal character
     set_character_state("normal")
+    
+    # Log the jump forces
+    print("Jump forces - Initial:", jump_force, " Double:", double_jump_force, " Triple:", triple_jump_force)
+    if is_mobile:
+        print("Mobile multipliers - Initial:", mobile_jump_force_multiplier, 
+             " Double:", mobile_double_jump_force_multiplier,
+             " Triple:", mobile_triple_jump_force_multiplier)
 
 func preload_textures():
     # Load textures in advance to avoid delays when switching
@@ -169,16 +183,34 @@ func _input(event):
     
     # Handle touch input for directional jumping
     if event is InputEventScreenTouch and event.pressed:
+        # Store touch position for reference
+        last_touch_position = event.position
+        
         # Only process touch events if they're not on UI controls
         var viewport_size = get_viewport_rect().size
         if event.position.y < viewport_size.y - 150:  # Above the control area
-            # Determine if tap is on left or right side of the screen
-            if event.position.x < screen_width / 2:
-                # Left side tap - jump left
-                target_x_position = max(global_position.x - 170, screen_margin)
+            # Determine jump direction based on touch position compared to player position
+            # Convert to screen percentage for consistent jumping regardless of screen size
+            var touch_x_percent = event.position.x / screen_width
+            
+            if is_mobile:
+                # On mobile, use a percentage-based approach for more consistent jumps
+                if touch_x_percent < 0.5:
+                    # Left side touch - jump left by a percentage of screen width
+                    target_x_position = max(global_position.x - (screen_width * mobile_jump_horizontal_distance), screen_margin)
+                    print("Mobile left jump to:", target_x_position, " (", touch_x_percent * 100, "% of screen)")
+                else:
+                    # Right side touch - jump right by a percentage of screen width
+                    target_x_position = min(global_position.x + (screen_width * mobile_jump_horizontal_distance), screen_width - screen_margin)
+                    print("Mobile right jump to:", target_x_position, " (", touch_x_percent * 100, "% of screen)")
             else:
-                # Right side tap - jump right
-                target_x_position = min(global_position.x + 170, screen_width - screen_margin)
+                # On desktop, use the original logic
+                if touch_x_percent < 0.5:
+                    # Left side touch - jump left
+                    target_x_position = max(global_position.x - 170, screen_margin)
+                else:
+                    # Right side touch - jump right
+                    target_x_position = min(global_position.x + 170, screen_width - screen_margin)
             
             # Set flag to indicate directional jump
             jumping_to_position = true
@@ -223,10 +255,16 @@ func set_target_position(pos_x: float):
 
 # Called from directional controls
 func move_left():
-    target_x_position = max(global_position.x - screen_width/4, screen_margin)
+    if is_mobile:
+        target_x_position = max(global_position.x - (screen_width * mobile_jump_horizontal_distance), screen_margin)
+    else:
+        target_x_position = max(global_position.x - screen_width/4, screen_margin)
 
 func move_right():
-    target_x_position = min(global_position.x + screen_width/4, screen_width - screen_margin)
+    if is_mobile:
+        target_x_position = min(global_position.x + (screen_width * mobile_jump_horizontal_distance), screen_width - screen_margin)
+    else:
+        target_x_position = min(global_position.x + screen_width/4, screen_width - screen_margin)
 
 func try_jump():
     # Check jump cooldown - this helps prevent accidental double taps on mobile
@@ -240,33 +278,46 @@ func try_jump():
     # Update last jump time
     last_jump_time = current_time
     
+    # Calculate jump forces based on platform (stronger on mobile)
+    var current_jump_force = jump_force
+    var current_double_jump_force = double_jump_force
+    var current_triple_jump_force = triple_jump_force
+    
+    if is_mobile:
+        current_jump_force = jump_force * mobile_jump_force_multiplier
+        current_double_jump_force = double_jump_force * mobile_double_jump_force_multiplier
+        current_triple_jump_force = triple_jump_force * mobile_triple_jump_force_multiplier
+    
     # If on floor or haven't jumped yet, do first jump
     if is_on_floor() or global_position.y >= floor_y_position - 20 or !is_jumping:
         jump_count = 1
-        velocity.y = jump_force
+        velocity.y = current_jump_force
         is_jumping = true
         has_double_jumped = false
         has_triple_jumped = false
         animation_player.play("jump")
         emit_signal("jump_performed")  # Emit signal for sound
+        print("First jump with force:", current_jump_force, " (Mobile:", is_mobile, ")")
         return true
         
     # If already jumped once but not twice, do double jump
     elif jump_count == 1:
         jump_count = 2
-        velocity.y = double_jump_force
+        velocity.y = current_double_jump_force
         has_double_jumped = true
         animation_player.play("double_jump")
         emit_signal("jump_performed")  # Emit signal for sound
+        print("Double jump with force:", current_double_jump_force, " (Mobile:", is_mobile, ")")
         return true
         
     # If already double jumped, do triple jump
     elif jump_count == 2:
         jump_count = 3
-        velocity.y = triple_jump_force
+        velocity.y = current_triple_jump_force
         has_triple_jumped = true
         animation_player.play("double_jump")  # Reuse the same animation
         emit_signal("jump_performed")  # Emit signal for sound
+        print("Triple jump with force:", current_triple_jump_force, " (Mobile:", is_mobile, ")")
         return true
         
     # No more jumps available
