@@ -25,6 +25,7 @@ const SAVE_FILE_PATH = "user://highscore.save"
 @onready var left_button = $Controls/LeftButton
 @onready var right_button = $Controls/RightButton
 @onready var jump_button = $Controls/JumpButton
+@onready var help_label = $Controls/HelpLabel
 @onready var ground = $Ground  # Reference to the ground visual
 @onready var controls_container = $Controls  # Container for all controls
 
@@ -53,8 +54,8 @@ func _ready():
 		DisplayServer.screen_set_orientation(DisplayServer.SCREEN_PORTRAIT)
 		print("Setting screen orientation to portrait")
 	
-	# Make controls visible on all platforms
-	controls_container.visible = true
+	# Set up controls based on platform
+	setup_controls()
 	
 	# Connect button signals
 	left_button.connect("pressed", Callable(self, "_on_left_button_pressed"))
@@ -89,6 +90,16 @@ func _ready():
 	await get_tree().create_timer(0.5).timeout
 	start_game()
 
+func setup_controls():
+	# Make controls visible and positioned properly
+	controls_container.visible = true
+	
+	# Set up help label
+	if is_mobile:
+		help_label.text = "Tap left/right side of screen\nto jump in that direction"
+	else:
+		help_label.text = "Arrow keys to move, Space to jump\nor use the on-screen buttons"
+
 func _process(delta):
 	if not game_active:
 		if Input.is_action_just_pressed("restart"):
@@ -97,6 +108,14 @@ func _process(delta):
 	
 	# Update game time (used for difficulty scaling)
 	game_time += delta
+	
+	# Input handling for keyboard
+	if Input.is_action_just_pressed("ui_left"):
+		_on_left_button_pressed()
+	elif Input.is_action_just_pressed("ui_right"):
+		_on_right_button_pressed()
+	elif Input.is_action_just_pressed("ui_accept") or Input.is_action_just_pressed("ui_select"):
+		_on_jump_button_pressed()
 
 func _on_left_button_pressed():
 	if game_active and player:
@@ -252,3 +271,16 @@ func load_high_score():
 				high_score = save_data.high_score
 	
 	update_high_score_display()
+
+# Function for input events directly from the screen
+func _unhandled_input(event):
+	# Handle raw screen touches for jumping in direction
+	if is_mobile and event is InputEventScreenTouch and event.pressed and game_active:
+		var screen_width = get_viewport().size.x
+		
+		# Only handle touch events in the game area (not on UI controls)
+		if event.position.y < screen_width - 120:  # Above control area
+			if event.position.x < screen_width / 2:
+				_on_left_button_pressed()
+			else:
+				_on_right_button_pressed()
