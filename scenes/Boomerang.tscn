@@ -1,22 +1,18 @@
-[gd_scene load_steps=4 format=3 uid="uid://wfn2f7r1gi3h"]
+[gd_scene load_steps=3 format="3" uid="uid://cpaxp3vjtwsam"]
 
 [ext_resource type="Script" path="res://scripts/boomerang.gd" id="1_rlm82"]
 [ext_resource type="Texture2D" uid="uid://bv04fec1foo5s" path="res://assets/sprites/boomerang.svg" id="2_uv8r5"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_tjmgv"]
-size = Vector2(40, 40)
+size = Vector2(80, 80)
 
 [node name="Boomerang" type="Area2D"]
 collision_layer = 4
 collision_mask = 2
 script = ExtResource("1_rlm82")
-flight_speed = null
-rotation_speed = null
-acceleration_factor = null
-path_height = null
-path_width = null
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(2.2, 2.2)
 texture = ExtResource("2_uv8r5")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
