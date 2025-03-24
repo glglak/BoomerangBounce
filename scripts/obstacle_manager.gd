@@ -33,7 +33,8 @@ var game_time = 0.0
 var difficulty_factor = 0.0  # 0 to 1, increases over time
 var player_reference = null
 var screen_height = 960  # Default, will be updated
-var boomerang_spawn_chance = 0.3  # 30% chance of spawning a boomerang
+var boomerang_spawn_chance = 0.4  # 40% chance of spawning a boomerang
+var player_y_position = 0  # Will track player's vertical position
 
 func _ready():
 	randomize()  # Initialize random seed
@@ -60,6 +61,10 @@ func update_screen_metrics():
 
 func set_player_reference(player):
 	player_reference = player
+	
+	# If player is available, get its initial y position
+	if player_reference:
+		player_y_position = player_reference.global_position.y
 
 func start():
 	# Update screen metrics first
@@ -76,6 +81,10 @@ func start():
 	current_speed = initial_obstacle_speed
 	difficulty_factor = 0.0
 	spawn_timer = randf_range(min_spawn_interval, max_spawn_interval)
+	
+	# Update player y position if player reference exists
+	if player_reference:
+		player_y_position = player_reference.global_position.y
 
 func stop():
 	is_active = false
@@ -92,6 +101,10 @@ func _process(delta):
 	
 	# Increase speed over time
 	current_speed = initial_obstacle_speed + (max_obstacle_speed - initial_obstacle_speed) * difficulty_factor
+	
+	# Update player position if player is available
+	if player_reference:
+		player_y_position = player_reference.global_position.y
 	
 	# Update spawn timer
 	spawn_timer -= delta
@@ -163,33 +176,33 @@ func spawn_obstacle():
 	
 	active_obstacles.append(obstacle)
 	
-	# Position obstacle based on type
-	var screen_center_y = screen_height / 2
+	# Position obstacle based on type - ensure it's at player's mid level
+	var obstacle_y_position = player_y_position
 	
 	if obstacle is Boomerang:
-		# Special handling for boomerang - position in middle of screen
-		obstacle.throw(Vector2(spawn_x_position, screen_center_y), 1.0 + difficulty_factor * 0.5)
+		# Special handling for boomerang - position at player level
+		obstacle.throw(Vector2(spawn_x_position, obstacle_y_position), 1.0 + difficulty_factor * 0.5)
+		print("Boomerang thrown at y position:", obstacle_y_position)
 	else:
-		# Position obstacle in middle of screen vertically
-		var obstacle_y = screen_center_y
-		
-		# Adjust based on obstacle type with some randomness to avoid all being at same height
-		var height_variance = randi() % 100 - 50  # Random -50 to +50 pixels
+		# Adjust based on obstacle type with small randomness for variety
+		var height_variance = randi() % 60 - 30  # Random -30 to +30 pixels
 		
 		if obstacle.get_meta("type", "") == "ground":
-			obstacle_y = screen_center_y + 80 + height_variance  # Lower
+			obstacle_y_position = player_y_position + 40 + height_variance  # Slightly lower
 		elif obstacle.get_meta("type", "") == "air":
-			obstacle_y = screen_center_y - 80 + height_variance  # Higher
+			obstacle_y_position = player_y_position - 40 + height_variance  # Slightly higher
 		else:
-			obstacle_y = screen_center_y + height_variance  # Middle with variance
+			obstacle_y_position = player_y_position + height_variance  # Near player level with variance
 		
 		# Ensure the obstacle isn't too close to the top or bottom
-		obstacle_y = clamp(obstacle_y, 100, floor_y_position - 50)
+		obstacle_y_position = clamp(obstacle_y_position, 100, floor_y_position - 50)
 		
 		# Set position
-		obstacle.position.y = obstacle_y
+		obstacle.position.y = obstacle_y_position
 		obstacle.position.x = spawn_x_position
 		obstacle.position.x += lane_positions[lane] - 270  # Offset based on lane
+		
+		print("Regular obstacle positioned at y:", obstacle_y_position, " (player at:", player_y_position, ")")
 	
 	# As difficulty increases, sometimes spawn multiple obstacles at once
 	if difficulty_factor > 0.3 and randf() < difficulty_factor * 0.4:
@@ -216,16 +229,16 @@ func spawn_obstacle():
 				
 			active_obstacles.append(second_obstacle)
 			
-			# Position second obstacle with different height
-			var second_obstacle_y = screen_center_y
-			var height_variance = randi() % 100 - 50
+			# Position second obstacle with small height variance
+			var second_obstacle_y = player_y_position
+			var height_variance = randi() % 60 - 30  # Random -30 to +30 pixels
 			
 			if second_obstacle_type == 1:  # Ground-type obstacle
-				second_obstacle_y = screen_center_y + 80 + height_variance
+				second_obstacle_y = player_y_position + 40 + height_variance  # Slightly lower
 			elif second_obstacle_type == 2:  # Air-type obstacle
-				second_obstacle_y = screen_center_y - 80 + height_variance
+				second_obstacle_y = player_y_position - 40 + height_variance  # Slightly higher
 			else:
-				second_obstacle_y = screen_center_y + height_variance
+				second_obstacle_y = player_y_position + height_variance  # At player level with variance
 				
 			second_obstacle_y = clamp(second_obstacle_y, 100, floor_y_position - 50)
 			
