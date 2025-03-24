@@ -19,11 +19,12 @@ var jumping_to_position: bool = false  # Track if we're in a directional jump
 
 # Character swap properties
 var character_states = {
-    "normal": "res://assets/player.svg",  # Default character
-    "hit": "res://assets/player_hit.svg"  # Character after being hit
+    "normal": "res://assets/sprites/player.svg",  # Default character
+    "hit": "res://assets/sprites/player_hit.svg"  # Character after being hit
 }
+var hit_texture = null
+var normal_texture = null
 var current_character_state = "normal"
-var hit_texture_loaded = false
 
 # State variables
 var is_jumping = false
@@ -45,6 +46,9 @@ func _ready():
     # Check if we're on mobile
     is_mobile = OS.get_name() == "Android" or OS.get_name() == "iOS"
     
+    # Preload textures
+    preload_textures()
+    
     # Wait a frame to ensure viewport size is correct
     await get_tree().process_frame
     
@@ -58,23 +62,25 @@ func _ready():
     
     # Make sure we're using the normal character
     set_character_state("normal")
-    
-    # Preload hit texture to avoid loading delay when hit
-    preload_hit_texture()
 
-func preload_hit_texture():
-    # Preload the hit texture to avoid loading delay when needed
-    if character_states.has("hit"):
-        var texture_path = character_states["hit"]
-        var texture = load(texture_path)
-        if texture != null:
-            hit_texture_loaded = true
-            print("Hit texture preloaded successfully")
-        else:
-            print("WARNING: Could not preload hit texture: " + texture_path)
-            print("Creating default hit texture")
-            # If the texture doesn't exist, use the normal texture with a red tint for hit state
-            character_states["hit"] = character_states["normal"]
+func preload_textures():
+    # Load textures in advance to avoid delays when switching
+    print("Loading player textures...")
+    
+    # Try to load the normal texture
+    normal_texture = load(character_states["normal"])
+    if normal_texture == null:
+        push_error("Could not load normal player texture: " + character_states["normal"])
+    else:
+        print("Normal player texture loaded successfully")
+    
+    # Try to load the hit texture
+    hit_texture = load(character_states["hit"])
+    if hit_texture == null:
+        push_error("Could not load hit player texture: " + character_states["hit"])
+        print("Hit texture not found, will use red tint instead")
+    else:
+        print("Hit player texture loaded successfully")
 
 func _update_screen_metrics():
     # Get screen dimensions
@@ -181,28 +187,34 @@ func _input(event):
 # Set the character state (normal or hit)
 func set_character_state(state: String):
     if state in character_states and state != current_character_state:
+        print("Changing character state from", current_character_state, "to", state)
         current_character_state = state
         
-        # Load the sprite texture for the new state
-        var texture_path = character_states[state]
-        var texture = load(texture_path)
-        
-        # Update the sprite if texture was loaded successfully
-        if texture != null:
-            sprite.texture = texture
-            print("Changed character state to: " + state)
-            
-            # Apply red tint for hit state if using the same texture
-            if state == "hit" and not hit_texture_loaded:
-                sprite.modulate = Color(1.0, 0.5, 0.5, 1.0)  # Red tint
-            else:
+        # Update the sprite based on the state
+        if state == "normal":
+            if normal_texture != null:
+                sprite.texture = normal_texture
                 sprite.modulate = Color.WHITE  # Normal color
-        else:
-            push_error("Failed to load texture: " + texture_path)
-            
-            # Fallback for hit state - use red tint
-            if state == "hit":
-                sprite.modulate = Color(1.0, 0.5, 0.5, 1.0)  # Red tint
+            else:
+                push_error("Normal texture is null when trying to set character state")
+                
+        elif state == "hit":
+            # Stop any animations to prevent them overriding our texture
+            if animation_player.is_playing():
+                animation_player.stop()
+                
+            if hit_texture != null:
+                sprite.texture = hit_texture
+                sprite.modulate = Color.WHITE  # Normal color
+                print("Applied hit texture to player")
+            else:
+                # Fallback - use normal texture with red tint
+                if normal_texture != null:
+                    sprite.texture = normal_texture
+                    sprite.modulate = Color(1.0, 0.5, 0.5, 1.0)  # Red tint
+                    print("Applied red tint fallback for hit state")
+                else:
+                    push_error("Both hit and normal textures are null")
 
 # Set target position directly (used for touch controls)
 func set_target_position(pos_x: float):
@@ -261,6 +273,7 @@ func try_jump():
     return false
 
 func update_animation():
+    # Don't update animations when dead
     if is_dead:
         return
         
@@ -287,14 +300,18 @@ func hit():
     if is_dead:
         return
     
-    print("Player hit! Changing character state to hit")
+    print("Player hit! Changing to hit character state")
     
-    # Change character to hit state
-    set_character_state("hit")
+    # Stop any animations to prevent them overriding our texture change
+    if animation_player.is_playing():
+        animation_player.stop()
     
     # Mark as dead and stop movement
     is_dead = true
     velocity = Vector2.ZERO
+    
+    # Change character to hit state
+    set_character_state("hit")
     
     # Signal that player was hit
     emit_signal("player_hit")
