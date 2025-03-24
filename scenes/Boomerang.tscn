@@ -10,11 +10,6 @@ size = Vector2(40, 40)
 collision_layer = 4
 collision_mask = 2
 script = ExtResource("1_rlm82")
-flight_speed = null
-rotation_speed = null
-acceleration_factor = null
-path_height = null
-path_width = null
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = ExtResource("2_uv8r5")
