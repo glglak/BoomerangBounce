@@ -33,13 +33,12 @@ func _ready() -> void:
 	# Initially deactivate the boomerang
 	is_active = false
 	visible = false
-	
-	# Make sure collision is enabled
 	monitoring = true
 	monitorable = true
 	
-	# Ensure sprite has its original scale
+	# Ensure sprite has its original scale and no color changes
 	sprite.scale = Vector2(1, 1)
+	sprite.modulate = Color.WHITE
 
 func _physics_process(delta: float) -> void:
 	if not is_active:
@@ -47,6 +46,10 @@ func _physics_process(delta: float) -> void:
 		
 	# Rotate the boomerang
 	sprite.rotation += rotation_speed * delta * 2 * PI
+	
+	# Ensure visibility and color stays consistent
+	visible = true
+	sprite.modulate = Color.WHITE
 	
 	# Move along the arc path
 	t += delta * flight_speed * current_speed_multiplier / path_width
@@ -71,6 +74,9 @@ func throw(start_pos: Vector2, speed_multiplier: float = 1.0) -> void:
 	is_active = true
 	visible = true
 	current_speed_multiplier = speed_multiplier
+	
+	# Ensure visibility and color stays consistent
+	sprite.modulate = Color.WHITE
 
 func reset() -> void:
 	# Reset boomerang state
