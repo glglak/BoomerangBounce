@@ -20,6 +20,7 @@ var is_returning: bool = false
 var is_active: bool = false
 var current_speed_multiplier: float = 1.0
 var is_mobile = false
+var has_hit_player = false  # Track if we've already hit the player
 
 # References
 @onready var sprite: Sprite2D = $Sprite2D
@@ -33,10 +34,10 @@ func _ready() -> void:
 	if not body_entered.is_connected(_on_body_entered):
 		body_entered.connect(_on_body_entered)
 	
-	# Make boomerang larger on mobile
-	var scale_factor = 1.2
+	# Make boomerang larger for better visibility
+	var scale_factor = 1.6
 	if is_mobile:
-		scale_factor = 1.4
+		scale_factor = 1.8
 	
 	# Scale both the sprite and collision shape
 	sprite.scale = Vector2(scale_factor, scale_factor)
@@ -51,9 +52,12 @@ func _ready() -> void:
 	visible = false
 	monitoring = true
 	monitorable = true
+	has_hit_player = false
 	
 	# Ensure sprite has no color changes
 	sprite.modulate = Color.WHITE
+	
+	print("Boomerang initialized")
 
 func _physics_process(delta: float) -> void:
 	if not is_active:
@@ -88,10 +92,12 @@ func throw(start_pos: Vector2, speed_multiplier: float = 1.0) -> void:
 	is_returning = false
 	is_active = true
 	visible = true
+	has_hit_player = false
 	current_speed_multiplier = speed_multiplier
 	
 	# Ensure visibility and color stays consistent
 	sprite.modulate = Color.WHITE
+	print("Boomerang thrown from position: ", start_pos)
 
 func reset() -> void:
 	# Reset boomerang state
@@ -99,6 +105,7 @@ func reset() -> void:
 	visible = false
 	t = 0.0
 	is_returning = false
+	has_hit_player = false
 
 func calculate_position(param: float) -> Vector2:
 	# Simple parabolic/arc path calculation
@@ -111,8 +118,9 @@ func calculate_position(param: float) -> Vector2:
 	return Vector2(x, y)
 
 func _on_body_entered(body: Node) -> void:
-	if body is Player:
-		# Player hit by boomerang
+	if body is Player and not has_hit_player:
+		# Player hit by boomerang - only hit once
+		has_hit_player = true
 		print("Boomerang hit player!")
 		body.hit()
 		# No need to deactivate here as the game will reset
