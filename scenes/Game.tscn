@@ -100,6 +100,7 @@ shape = SubResource("RectangleShape2D_h1f7c")
 
 [node name="Player" parent="." instance=ExtResource("7_rh6mb")]
 position = Vector2(270, 830)
+scale = Vector2(2.2, 2.2)
 
 [node name="ObstacleManager" type="Node2D" parent="."]
 script = ExtResource("8_r8kic")
@@ -331,3 +332,7 @@ bus = &"SFX"
 [node name="GameOverSound" type="AudioStreamPlayer" parent="Audio"]
 stream = ExtResource("18_6aek6")
 bus = &"SFX"
+
+[connection signal="pressed" from="UI/RestartButton" to="." method="restart_game"]
+[connection signal="pressed" from="UI/GameOverPanel/RestartButton" to="." method="restart_game"]
+[connection signal="pressed" from="Controls/JumpButton" to="." method="_on_jump_button_pressed"]
