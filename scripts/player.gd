@@ -25,6 +25,8 @@ var jump_count = 0
 var is_dead = false
 var floor_y_position: float = 830.0  # Default value
 var is_mobile = false
+var last_jump_time: float = 0.0  # Track the last time a jump was performed
+var jump_cooldown: float = 0.2    # Required time between jumps (in seconds)
 
 # Reference nodes
 @onready var animation_player = $AnimationPlayer
@@ -39,6 +41,9 @@ func _ready():
 	
 	# Force immediate position update
 	_update_screen_metrics()
+	
+	# Set up collision detection more reliably
+	$CollisionShape2D.shape.radius = 30 if is_mobile else 25
 
 func _update_screen_metrics():
 	# Get screen dimensions
@@ -127,17 +132,20 @@ func _input(event):
 	
 	# Handle touch input for directional jumping
 	if event is InputEventScreenTouch and event.pressed:
-		# Determine if tap is on left or right side of the screen
-		if event.position.x < screen_width / 2:
-			# Left side tap - jump left
-			target_x_position = max(global_position.x - 170, screen_margin)
-		else:
-			# Right side tap - jump right
-			target_x_position = min(global_position.x + 170, screen_width - screen_margin)
-		
-		# Set flag to indicate directional jump
-		jumping_to_position = true
-		try_jump()
+		# Only process touch events if they're not on UI controls
+		var viewport_size = get_viewport_rect().size
+		if event.position.y < viewport_size.y - 150:  # Above the control area
+			# Determine if tap is on left or right side of the screen
+			if event.position.x < screen_width / 2:
+				# Left side tap - jump left
+				target_x_position = max(global_position.x - 170, screen_margin)
+			else:
+				# Right side tap - jump right
+				target_x_position = min(global_position.x + 170, screen_width - screen_margin)
+			
+			# Set flag to indicate directional jump
+			jumping_to_position = true
+			try_jump()
 
 # Set target position directly (used for touch controls)
 func set_target_position(pos_x: float):
@@ -152,6 +160,17 @@ func move_right():
 	target_x_position = min(global_position.x + screen_width/4, screen_width - screen_margin)
 
 func try_jump():
+	# Check jump cooldown - this helps prevent accidental double taps on mobile
+	var current_time = Time.get_ticks_msec() / 1000.0
+	var time_since_last_jump = current_time - last_jump_time
+	
+	# If cooldown hasn't elapsed and we're not on the floor, ignore the jump
+	if time_since_last_jump < jump_cooldown and jump_count > 0:
+		return false
+	
+	# Update last jump time
+	last_jump_time = current_time
+	
 	# If on floor or haven't jumped yet, do first jump
 	if is_on_floor() or global_position.y >= floor_y_position - 20 or !is_jumping:
 		jump_count = 1
