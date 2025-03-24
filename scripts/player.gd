@@ -12,15 +12,16 @@ var target_x_position: float = 270.0  # Default to center
 var jumping_to_position: bool = false  # Track if we're in a directional jump
 
 # Jump properties
-@export var jump_force: float = -800.0
+@export var jump_force: float = -1100.0  # Stronger initial jump
 @export var gravity: float = 2500.0
-@export var double_jump_force: float = -850.0
-@export var triple_jump_force: float = -900.0
+@export var double_jump_force: float = -1300.0  # Much stronger double jump
+@export var triple_jump_force: float = -1500.0  # Extremely strong triple jump
 
 # State variables
 var is_jumping = false
 var has_double_jumped = false
 var has_triple_jumped = false
+var jump_count = 0
 var is_dead = false
 var floor_y_position: float = 830.0  # Default value
 var is_mobile = false
@@ -88,6 +89,7 @@ func _physics_process(delta):
 		is_jumping = false
 		has_double_jumped = false
 		has_triple_jumped = false
+		jump_count = 0
 		jumping_to_position = false  # Reset position jump flag
 	
 	# Handle horizontal movement
@@ -150,31 +152,37 @@ func move_right():
 	target_x_position = min(global_position.x + screen_width/4, screen_width - screen_margin)
 
 func try_jump():
+	# If on floor or haven't jumped yet, do first jump
 	if is_on_floor() or global_position.y >= floor_y_position - 20 or !is_jumping:
-		# First jump
+		jump_count = 1
 		velocity.y = jump_force
 		is_jumping = true
 		has_double_jumped = false
 		has_triple_jumped = false
 		animation_player.play("jump")
 		emit_signal("jump_performed")  # Emit signal for sound
-		return
+		return true
 		
-	if is_jumping and not has_double_jumped:
-		# Double jump
+	# If already jumped once but not twice, do double jump
+	elif jump_count == 1:
+		jump_count = 2
 		velocity.y = double_jump_force
 		has_double_jumped = true
 		animation_player.play("double_jump")
 		emit_signal("jump_performed")  # Emit signal for sound
-		return
+		return true
 		
-	if is_jumping and has_double_jumped and not has_triple_jumped:
-		# Triple jump (even higher)
+	# If already double jumped, do triple jump
+	elif jump_count == 2:
+		jump_count = 3
 		velocity.y = triple_jump_force
 		has_triple_jumped = true
 		animation_player.play("double_jump")  # Reuse the same animation
 		emit_signal("jump_performed")  # Emit signal for sound
-		return
+		return true
+		
+	# No more jumps available
+	return false
 
 func update_animation():
 	if is_dead:
@@ -213,6 +221,7 @@ func reset():
 	is_jumping = false
 	has_double_jumped = false
 	has_triple_jumped = false
+	jump_count = 0
 	jumping_to_position = false
 	
 	# Force position update
