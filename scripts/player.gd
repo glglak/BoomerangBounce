@@ -38,7 +38,7 @@ func _update_screen_metrics():
 	var viewport_rect = get_viewport_rect().size
 	screen_width = viewport_rect.x
 	
-	# Set floor position to absolute bottom of screen
+	# Set floor position to absolute bottom of screen with a small margin for ground
 	floor_y_position = viewport_rect.y - 30  # Very close to bottom of screen
 	
 	# Start in the middle of the screen
@@ -94,6 +94,8 @@ func _physics_process(delta):
 	
 	# Clamp position to stay in game area
 	global_position.x = clamp(global_position.x, screen_margin, screen_width - screen_margin)
+	
+	# Ensure player doesn't go below floor
 	global_position.y = min(global_position.y, floor_y_position)
 	
 	# Update animation based on state
@@ -105,6 +107,20 @@ func _input(event):
 		
 	# Handle keyboard input (for testing)
 	if event.is_action_pressed("jump"):
+		try_jump()
+	
+	# Handle touch input for directional jumping
+	if event is InputEventScreenTouch and event.pressed:
+		# Determine if tap is on left or right side of the screen
+		if event.position.x < screen_width / 2:
+			# Left side tap - jump left
+			target_x_position = max(global_position.x - 170, screen_margin)
+		else:
+			# Right side tap - jump right
+			target_x_position = min(global_position.x + 170, screen_width - screen_margin)
+		
+		# Set flag to indicate directional jump
+		jumping_to_position = true
 		try_jump()
 
 # Set target position directly (used for touch controls)
