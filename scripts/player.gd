@@ -5,10 +5,10 @@ signal player_hit
 signal jump_performed  # Signal for jump sound
 
 # Movement parameters
-var screen_width: float
+var screen_width: float = 540.0  # Default value in case of early access
 var screen_margin: float = 50.0  # Margin from screen edges
 var move_speed: float = 350.0  # Reduced to prevent too fast movement
-var target_x_position: float
+var target_x_position: float = 270.0  # Default to center
 var jumping_to_position: bool = false  # Track if we're in a directional jump
 
 # Jump properties
@@ -22,7 +22,7 @@ var is_jumping = false
 var has_double_jumped = false
 var has_triple_jumped = false
 var is_dead = false
-var floor_y_position: float
+var floor_y_position: float = 830.0  # Default value
 var is_mobile = false
 
 # Reference nodes
@@ -150,7 +150,7 @@ func move_right():
 	target_x_position = min(global_position.x + screen_width/4, screen_width - screen_margin)
 
 func try_jump():
-	if !is_jumping or is_on_floor() or global_position.y >= floor_y_position - 20:
+	if is_on_floor() or global_position.y >= floor_y_position - 20 or !is_jumping:
 		# First jump
 		velocity.y = jump_force
 		is_jumping = true
@@ -158,18 +158,23 @@ func try_jump():
 		has_triple_jumped = false
 		animation_player.play("jump")
 		emit_signal("jump_performed")  # Emit signal for sound
-	elif is_jumping and not has_double_jumped:
+		return
+		
+	if is_jumping and not has_double_jumped:
 		# Double jump
 		velocity.y = double_jump_force
 		has_double_jumped = true
 		animation_player.play("double_jump")
 		emit_signal("jump_performed")  # Emit signal for sound
-	elif is_jumping and has_double_jumped and not has_triple_jumped:
+		return
+		
+	if is_jumping and has_double_jumped and not has_triple_jumped:
 		# Triple jump (even higher)
 		velocity.y = triple_jump_force
 		has_triple_jumped = true
 		animation_player.play("double_jump")  # Reuse the same animation
 		emit_signal("jump_performed")  # Emit signal for sound
+		return
 
 func update_animation():
 	if is_dead:
