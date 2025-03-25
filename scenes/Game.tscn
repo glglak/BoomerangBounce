@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://cylqg6qd4u4gm"]
+[gd_scene load_steps=21 format=3 uid="uid://cylqg6qd4u4gm"]
 
 [ext_resource type="Script" path="res://scripts/game_manager.gd" id="1_6l7x2"]
 [ext_resource type="Texture2D" uid="uid://cuyx1syyeykv5" path="res://assets/sprites/background1.svg" id="2_mak7p"]
@@ -18,12 +18,16 @@
 [ext_resource type="AudioStream" uid="uid://bhtvvdcaqh34q" path="res://assets/audio/milestone5.mp3" id="16_5sgnt"]
 [ext_resource type="AudioStream" uid="uid://cypdvx2mcdq2g" path="res://assets/audio/wesopeso.mp3" id="17_a0yg3"]
 [ext_resource type="AudioStream" uid="uid://cpnc6ux7bbpvk" path="res://assets/audio/game-over.mp3" id="18_6aek6"]
+[ext_resource type="Script" path="res://scripts/viewport_options.gd" id="19_3hcdc"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_h1f7c"]
 size = Vector2(600, 30)
 
 [node name="Game" type="Node"]
 script = ExtResource("1_6l7x2")
+
+[node name="ViewportOptions" type="Node" parent="."]
+script = ExtResource("19_3hcdc")
 
 [node name="Backgrounds" type="Node" parent="."]
 
