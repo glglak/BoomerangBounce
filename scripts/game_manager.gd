@@ -24,7 +24,6 @@ const SAVE_FILE_PATH = "user://highscore.save"
 @onready var game_over_panel = $UI/GameOverPanel
 @onready var restart_button = $UI/RestartButton
 @onready var gameover_restart_button = $UI/GameOverPanel/RestartButton
-@onready var jump_button = $Controls/JumpButton
 @onready var help_label = $Controls/HelpLabel
 @onready var ground = $Ground  # Reference to the ground visual
 @onready var controls_container = $Controls  # Container for all controls
@@ -151,21 +150,6 @@ func direct_connect_button_signals():
 		# Connect directly
 		gameover_restart_button.pressed.connect(Callable(self, "restart_game"))
 		print("Game over restart button connected")
-	
-	# Configure jump button
-	if jump_button:
-		# Set visible properties
-		jump_button.flat = false
-		jump_button.focus_mode = Control.FOCUS_ALL
-		jump_button.mouse_filter = Control.MOUSE_FILTER_STOP
-		
-		# IMPROVED: Disconnect any existing signals but handle null checks
-		if jump_button.pressed.is_connected(Callable(self, "_on_jump_button_pressed")):
-			jump_button.pressed.disconnect(Callable(self, "_on_jump_button_pressed"))
-		
-		# Connect directly
-		jump_button.pressed.connect(Callable(self, "_on_jump_button_pressed"))
-		print("Jump button connected")
 
 func setup_controls():
 	# Make controls visible and positioned properly for mobile
@@ -201,12 +185,6 @@ func setup_controls():
 		if is_mobile:
 			# INCREASED button size for better touch target
 			gameover_restart_button.custom_minimum_size = Vector2(280, 120)
-	
-	if jump_button and is_mobile:
-		# INCREASED jump button size for better touch target
-		jump_button.custom_minimum_size = Vector2(220, 120)
-		jump_button.mouse_filter = Control.MOUSE_FILTER_STOP
-		jump_button.flat = false
 
 func _process(delta):
 	if not game_active:
@@ -219,7 +197,7 @@ func _process(delta):
 	
 	# Input handling for keyboard
 	if Input.is_action_just_pressed("ui_accept") or Input.is_action_just_pressed("ui_select"):
-		_on_jump_button_pressed()
+		_on_player_tap()
 
 func _unhandled_input(event):
 	# Ignore input if blocked
@@ -234,11 +212,6 @@ func _unhandled_input(event):
 		# Only handle touch events in the game area (not on UI controls)
 		if event.position.y < screen_height - 150:  # Above control area
 			# Check if touch is on any UI elements first
-			if jump_button and jump_button.get_global_rect().has_point(event.position):
-				print("Jump button pressed via direct touch")
-				_on_jump_button_pressed()
-				return
-				
 			if restart_button and restart_button.get_global_rect().has_point(event.position):
 				print("Restart button pressed via direct touch")
 				restart_game()
@@ -254,12 +227,12 @@ func _unhandled_input(event):
 				print("Game over restart button pressed via direct touch")
 				restart_game()
 
-func _on_jump_button_pressed():
+func _on_player_tap():
 	# Ignore if input is blocked
 	if input_blocked:
 		return
 		
-	print("Jump button pressed in game manager")
+	print("Tap detected in game manager")
 	if game_active and player:
 		player.perform_jump()
 
