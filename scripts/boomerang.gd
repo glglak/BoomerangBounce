@@ -22,7 +22,6 @@ var current_speed_multiplier: float = 1.0
 var is_mobile = false
 var has_hit_player = false  # Track if we've already hit the player
 var boomerang_texture = null
-var glow_particle: CPUParticles2D
 
 # References
 @onready var sprite: Sprite2D = $Sprite2D
@@ -41,24 +40,6 @@ func _ready() -> void:
     var scale_factor = 8.0  # DRAMATICALLY INCREASED scale factor
     if is_mobile:
         scale_factor = 10.0  # Even bigger on mobile
-    
-    # Add glow particles to make boomerang more visible
-    glow_particle = CPUParticles2D.new()
-    add_child(glow_particle)
-    glow_particle.amount = 50
-    glow_particle.lifetime = 0.5
-    glow_particle.explosiveness = 0.1
-    glow_particle.randomness = 0.5
-    glow_particle.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
-    glow_particle.emission_sphere_radius = 10.0
-    glow_particle.direction = Vector2(0, 0)
-    glow_particle.spread = 180
-    glow_particle.gravity = Vector2(0, 0)
-    glow_particle.initial_velocity_min = 20
-    glow_particle.initial_velocity_max = 40
-    glow_particle.scale_amount = 4.0
-    glow_particle.color = Color(1.0, 0.2, 0.1, 0.8)  # Bright red glow
-    glow_particle.emitting = true
     
     # Try to load the boomerang texture from multiple possible paths
     var possible_paths = [
@@ -154,10 +135,6 @@ func throw(start_pos: Vector2, speed_multiplier: float = 1.0) -> void:
     # Ensure visibility and color stays consistent
     sprite.modulate = Color(1.0, 0.2, 0.2, 1.0)  # Bright red for visibility
     
-    # Start emitting particles
-    if glow_particle:
-        glow_particle.emitting = true
-        
     print("Boomerang thrown from position: ", start_pos)
 
 func reset() -> void:
@@ -167,10 +144,6 @@ func reset() -> void:
     t = 0.0
     is_returning = false
     has_hit_player = false
-    
-    # Stop particles
-    if glow_particle:
-        glow_particle.emitting = false
 
 func calculate_position(param: float) -> Vector2:
     # Simple parabolic/arc path calculation
