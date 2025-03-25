@@ -8,8 +8,8 @@ func _ready():
 		# Fix for scale_amount property in Godot 4
 		if particles.has_method("set_param_min") and particles.has_method("set_param_max"):
 			# Use Godot 4's renamed methods
-			particles.set_param_min(GPUParticles2D.PARAM_SCALE, 1.0)  # Default value, adjust as needed
-			particles.set_param_max(GPUParticles2D.PARAM_SCALE, 1.0)  # Default value, adjust as needed
+			particles.set_param_min(CPUParticles2D.PARAM_SCALE, 1.0)  # Default value, adjust as needed
+			particles.set_param_max(CPUParticles2D.PARAM_SCALE, 1.0)  # Default value, adjust as needed
 		elif particles.has_method("set_scale_amount"):
 			# Use legacy method if available
 			particles.set_scale_amount(1.0)  # Default value, adjust as needed
