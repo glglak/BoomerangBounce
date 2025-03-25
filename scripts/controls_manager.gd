@@ -23,24 +23,84 @@ var directional_jump_touch_idx: Array = []  # Store indexes for directional jump
 # Helper label for debugging
 @onready var help_label: Label = $HelpLabel
 
+# Debounce system
+var jump_debounce_timer = null
+var jump_cooldown = 0.05  # Shorter cooldown for more responsive jumps
+
 func _ready() -> void:
-	# Connect button signals
-	left_button.connect("button_down", _on_left_button_down)
-	left_button.connect("button_up", _on_left_button_up)
+	# Create debounce timer for jump
+	jump_debounce_timer = Timer.new()
+	jump_debounce_timer.one_shot = true
+	jump_debounce_timer.wait_time = jump_cooldown
+	jump_debounce_timer.autostart = false
+	add_child(jump_debounce_timer)
 	
-	right_button.connect("button_down", _on_right_button_down)
-	right_button.connect("button_up", _on_right_button_up)
+	# Ensure buttons are properly sized and visible
+	_configure_buttons_for_mobile()
 	
-	jump_button.connect("button_down", _on_jump_button_down)
+	# Connect button signals with more reliable method
+	if left_button != null:
+		if left_button.button_down.is_connected(_on_left_button_down):
+			left_button.button_down.disconnect(_on_left_button_down)
+		left_button.button_down.connect(_on_left_button_down)
+		
+		if left_button.button_up.is_connected(_on_left_button_up):
+			left_button.button_up.disconnect(_on_left_button_up)
+		left_button.button_up.connect(_on_left_button_up)
+	
+	if right_button != null:
+		if right_button.button_down.is_connected(_on_right_button_down):
+			right_button.button_down.disconnect(_on_right_button_down)
+		right_button.button_down.connect(_on_right_button_down)
+		
+		if right_button.button_up.is_connected(_on_right_button_up):
+			right_button.button_up.disconnect(_on_right_button_up)
+		right_button.button_up.connect(_on_right_button_up)
+	
+	if jump_button != null:
+		if jump_button.button_down.is_connected(_on_jump_button_down):
+			jump_button.button_down.disconnect(_on_jump_button_down)
+		jump_button.button_down.connect(_on_jump_button_down)
 	
 	# Make sure help text is visible
 	if help_label:
 		help_label.visible = true
+		
+	print("Controls manager initialized with improved mobile support")
+
+func _configure_buttons_for_mobile() -> void:
+	# Make buttons more prominent and easier to tap
+	if left_button:
+		left_button.modulate = Color(1.0, 1.0, 1.0, 1.0)  # Full opacity
+		left_button.mouse_filter = Control.MOUSE_FILTER_STOP
+		left_button.focus_mode = Control.FOCUS_ALL
+		left_button.ignore_texture_size = true
+		left_button.stretch_mode = TextureButton.STRETCH_SCALE
+		left_button.custom_minimum_size = Vector2(120, 120)
+	
+	if right_button:
+		right_button.modulate = Color(1.0, 1.0, 1.0, 1.0)  # Full opacity
+		right_button.mouse_filter = Control.MOUSE_FILTER_STOP
+		right_button.focus_mode = Control.FOCUS_ALL
+		right_button.ignore_texture_size = true
+		right_button.stretch_mode = TextureButton.STRETCH_SCALE
+		right_button.custom_minimum_size = Vector2(120, 120)
+	
+	if jump_button:
+		jump_button.modulate = Color(1.0, 1.0, 1.0, 1.0)  # Full opacity
+		jump_button.mouse_filter = Control.MOUSE_FILTER_STOP
+		jump_button.focus_mode = Control.FOCUS_ALL
+		jump_button.ignore_texture_size = true
+		jump_button.stretch_mode = TextureButton.STRETCH_SCALE
+		jump_button.custom_minimum_size = Vector2(150, 150)
 
 func _input(event: InputEvent) -> void:
-	# Handle touch input
+	# Handle touch input with improved detection
 	if event is InputEventScreenTouch:
 		_handle_touch_event(event)
+		
+	# Ensure input event gets processed correctly
+	get_viewport().set_input_as_handled()
 
 func _handle_touch_event(event: InputEventScreenTouch) -> void:
 	var touch_position = event.position
@@ -49,31 +109,46 @@ func _handle_touch_event(event: InputEventScreenTouch) -> void:
 	if event.pressed:
 		# New touch started
 		if _is_touch_in_left_control(touch_position):
+			print("Left control touched at " + str(touch_position))
 			left_touch_idx = event.index
 			emit_signal("move_left_pressed")
+			get_viewport().set_input_as_handled()
+			
 		elif _is_touch_in_right_control(touch_position):
+			print("Right control touched at " + str(touch_position))
 			right_touch_idx = event.index
 			emit_signal("move_right_pressed")
+			get_viewport().set_input_as_handled()
+			
 		elif _is_touch_in_jump_control(touch_position):
+			print("Jump control touched at " + str(touch_position))
 			jump_touch_idx = event.index
-			emit_signal("jump_pressed")
+			# Only allow jump if not in cooldown
+			if jump_debounce_timer.time_left <= 0:
+				emit_signal("jump_pressed")
+				jump_debounce_timer.start()
+			get_viewport().set_input_as_handled()
+			
 		else:
 			# For touches elsewhere on screen, direct the jump to that position
+			print("Screen touch for directional jump at " + str(touch_position))
 			directional_jump_touch_idx.append(event.index)
 			
 			# Signal player to move toward touch position first
 			emit_signal("set_target_position", touch_position.x)
 			
-			# Then signal to jump (slightly delayed to ensure direction works first)
-			await get_tree().create_timer(0.02).timeout
-			emit_signal("jump_pressed")
+			# Then signal to jump immediately (no delay)
+			if jump_debounce_timer.time_left <= 0:
+				emit_signal("jump_pressed")
+				jump_debounce_timer.start()
 			
-			# Register input actions
+			# Register input actions to ensure compatibility
 			Input.action_press("jump")
 			
 			# Auto-release jump after short time
-			await get_tree().create_timer(0.1).timeout
+			await get_tree().create_timer(0.05).timeout
 			Input.action_release("jump")
+			get_viewport().set_input_as_handled()
 	else:
 		# Touch ended
 		if event.index == left_touch_idx:
@@ -98,6 +173,7 @@ func _is_touch_in_jump_control(pos: Vector2) -> bool:
 
 # Button signal handlers
 func _on_left_button_down() -> void:
+	print("Left button pressed")
 	emit_signal("move_left_pressed")
 	
 	# Set target position immediately with move_left
@@ -114,6 +190,7 @@ func _on_left_button_up() -> void:
 	Input.action_release("move_left")
 
 func _on_right_button_down() -> void:
+	print("Right button pressed")
 	emit_signal("move_right_pressed")
 	
 	# Set target position immediately with move_right
@@ -130,12 +207,19 @@ func _on_right_button_up() -> void:
 	Input.action_release("move_right")
 
 func _on_jump_button_down() -> void:
-	# Jump in place (no horizontal movement)
-	emit_signal("jump_pressed")
+	print("Jump button pressed")
 	
-	# Also register input action for player script to pick up
-	Input.action_press("jump")
-	
-	# Auto-release the jump input after a short time
-	await get_tree().create_timer(0.1).timeout
-	Input.action_release("jump")
+	# Only allow jump if not in cooldown
+	if jump_debounce_timer.time_left <= 0:
+		# Jump in place (no horizontal movement)
+		emit_signal("jump_pressed")
+		
+		# Also register input action for player script to pick up
+		Input.action_press("jump")
+		
+		# Start debounce timer
+		jump_debounce_timer.start()
+		
+		# Auto-release the jump input after a short time
+		await get_tree().create_timer(0.05).timeout
+		Input.action_release("jump")
