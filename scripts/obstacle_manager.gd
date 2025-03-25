@@ -233,15 +233,15 @@ func spawn_obstacle():
 			
 			# Position second obstacle with small height variance
 			var second_obstacle_y = player_y_position
-			var type_string = second_obstacle.get_meta("type", "regular")
-			var height_variance = randi() % 30 - 15  # Random -15 to +15 pixels
+			var second_type_string = second_obstacle.get_meta("type", "regular")
+			var second_height_variance = randi() % 30 - 15  # Random -15 to +15 pixels
 			
-			if type_string == "ground":
-				second_obstacle_y = player_y_position + 20 + height_variance
-			elif type_string == "air":
-				second_obstacle_y = player_y_position - 20 + height_variance
+			if second_type_string == "ground":
+				second_obstacle_y = player_y_position + 20 + second_height_variance
+			elif second_type_string == "air":
+				second_obstacle_y = player_y_position - 20 + second_height_variance
 			else:
-				second_obstacle_y = player_y_position + height_variance
+				second_obstacle_y = player_y_position + second_height_variance
 				
 			second_obstacle_y = clamp(second_obstacle_y, 100, floor_y_position - 50)
 			
