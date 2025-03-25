@@ -29,10 +29,6 @@ var hit_texture = null
 var normal_texture = null
 var current_character_state = "normal"
 
-# Jump effect scene
-var jump_effect_scene = preload("res://scenes/JumpEffect.tscn")
-var active_jump_effects = []
-
 # State variables
 var is_jumping = false
 var has_double_jumped = false
@@ -172,27 +168,6 @@ func _physics_process(delta):
     if current_time - last_jump_time >= jump_cooldown:
         can_jump = true
 
-# Creates the jump effect particle system
-func create_jump_effect():
-    if jump_effect_scene:
-        var effect = jump_effect_scene.instantiate()
-        get_parent().add_child(effect)
-        effect.global_position = global_position
-        effect.global_position.y += 30  # Position at feet
-        
-        # Call the play function in the effect
-        if effect.has_method("play_jump_effect"):
-            effect.play_jump_effect()
-        
-        # Store the effect to clean up later
-        active_jump_effects.append(effect)
-        
-        # Set a timer to remove the effect after it plays
-        await get_tree().create_timer(1.0).timeout
-        if is_instance_valid(effect) and effect in active_jump_effects:
-            active_jump_effects.erase(effect)
-            effect.queue_free()
-
 # For direct touch input (mobile) - IMPROVED
 func handle_directional_input(touch_position):
     # Ensure we don't process input if blocked
@@ -291,9 +266,6 @@ func try_jump():
     # Update jump timing
     last_jump_time = Time.get_ticks_msec() / 1000.0
     can_jump = false
-    
-    # Create jump effect particles (uses our new fixed scene)
-    create_jump_effect()
     
     # First jump
     if is_on_floor() or global_position.y >= floor_y_position - 20 or !is_jumping:
@@ -414,12 +386,6 @@ func reset():
     jumping_to_position = false
     can_jump = true
     input_blocked = false
-    
-    # Clean up any jump effects
-    for effect in active_jump_effects:
-        if is_instance_valid(effect):
-            effect.queue_free()
-    active_jump_effects.clear()
     
     # Reset position
     _update_screen_metrics()
