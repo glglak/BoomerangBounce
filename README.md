@@ -1,4 +1,4 @@
-# Boomerang Bounce
+# Obstacle Runner
 
 An endless runner game built with Godot 4.2+, where you move, jump, and double jump to avoid obstacles.
 
@@ -54,7 +54,7 @@ The background changes at different score milestones:
 ## Project Structure
 
 ```
-BoomerangBounce/
+ObstacleRunner/
 ├── assets/
 │   ├── sprites/         # Game sprites and SVG backgrounds
 │   ├── audio/           # Sound effects and music
@@ -106,6 +106,23 @@ Use any SVG editor like Inkscape, Adobe Illustrator, or online tools to modify t
 
 Replace the audio files in the `assets/audio/` directory with your own sounds.
 After adding custom audio, you may need to reimport them in Godot and update their properties.
+
+<!-- REMOVED_FEATURE_TAG -->
+## Removed Boomerang Feature
+
+This version of the game has had the boomerang obstacle mechanics removed. The following changes were made:
+
+1. Removed the boomerang scene reference from Game.tscn
+2. Removed the boomerang_scene reference from obstacle_manager.gd
+3. Removed the boomerang.gd script
+4. Removed the Boomerang.tscn scene
+
+The game now only includes standard obstacles that appear from the right side of the screen. The original boomerang mechanics featured a special obstacle that followed an arc path and could loop back toward the player.
+
+This removal simplifies the game mechanics while maintaining the core endless runner experience.
+
+If you need to restore the boomerang feature in a future version, check the commit history or reference the original repository.
+<!-- END_REMOVED_FEATURE_TAG -->
 
 <!-- TROUBLESHOOTING_TAG -->
 ## Troubleshooting Guide
