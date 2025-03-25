@@ -2,6 +2,7 @@ extends Button
 
 var is_mobile = false
 var button_pressed = false  # Prevent double-presses
+var debounce_timer = null  # Timer for input protection
 
 func _ready():
 	# Check platform
@@ -13,18 +14,27 @@ func _ready():
 	flat = false  # Non-flat buttons are more visible on mobile
 	focus_mode = Control.FOCUS_ALL  # Ensure button can be focused by input events
 	
+	# Make button more visible and touchable on mobile
+	if is_mobile:
+		custom_minimum_size = Vector2(180, 80)  # INCREASED size
+		modulate = Color(1.0, 1.0, 1.0, 1.0)  # Full opacity
+	
+	# Create a timer for debouncing
+	debounce_timer = Timer.new()
+	debounce_timer.one_shot = true
+	debounce_timer.wait_time = 0.5
+	debounce_timer.autostart = false
+	add_child(debounce_timer)
+	debounce_timer.timeout.connect(_on_debounce_timer_timeout)
+	
 	# Reset button state
 	button_pressed = false
 	
-	# Make button larger on mobile for easier touch interaction
-	if is_mobile:
-		custom_minimum_size = Vector2(140, 60)
-	
 	# Check if signal is already connected to avoid duplicate connections
-	if not pressed.is_connected(_on_pressed):
-		pressed.connect(_on_pressed)
+	if not pressed.is_connected(_on_button_pressed):
+		pressed.connect(_on_button_pressed)
 	
-	print("Restart button initialized with proper configuration")
+	print("Restart button initialized with IMPROVED mobile configuration")
 
 func _input(event):
 	# Additional input handling for touch devices
@@ -32,34 +42,40 @@ func _input(event):
 		if event.pressed and not button_pressed:
 			# Check if touch is on this button's area
 			if get_global_rect().has_point(event.position):
-				_on_pressed()
+				print("Touch detected on restart button at " + str(event.position))
+				_on_button_pressed()
+				get_viewport().set_input_as_handled()
 				return true  # Consume event
 
-func _on_pressed():
+func _on_button_pressed():
 	print("Restart button pressed")
 	
 	# Prevent double-presses
-	if button_pressed:
+	if button_pressed or debounce_timer.time_left > 0:
+		print("Input blocked - debounce timer active")
 		return
 	
 	button_pressed = true
+	debounce_timer.start()
 	
 	# Add visual feedback for button press
-	if is_mobile:
-		modulate = Color(0.8, 0.8, 0.8)  # Slightly darken button
-		await get_tree().create_timer(0.1).timeout
-		modulate = Color(1, 1, 1)  # Reset color
+	modulate = Color(0.7, 0.7, 0.7)  # Darker button for feedback
 	
+	# IMPORTANT: Use a call_deferred to avoid potential deadlocks
+	call_deferred("_perform_restart")
+
+func _perform_restart():
 	# Get reference to the game manager (parent node)
 	var game_manager = get_node("/root/Game")
 	if game_manager:
 		# Call restart function on game manager
 		game_manager.restart_game()
-		
-		# Reset button state after a short delay
-		await get_tree().create_timer(0.5).timeout
-		button_pressed = false
 	else:
 		push_error("Could not find Game node")
 		print("Could not find Game node")
 		button_pressed = false
+		modulate = Color(1, 1, 1)  # Reset color
+
+func _on_debounce_timer_timeout():
+	button_pressed = false
+	modulate = Color(1, 1, 1)  # Reset color
