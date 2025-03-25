@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="BoomerangBounce"
-run/main_scene="res://scenes/Game.tscn"
+run/main_scene="res://scenes/MainMenu.tscn"
 config/features=PackedStringArray("4.2", "GL Compatibility")
 config/icon="res://assets/sprites/player.svg"
 
@@ -26,14 +26,10 @@ window/size/viewport_height=960
 window/handheld/orientation=1
 window/stretch/mode="viewport"
 window/handheld/emulate_touchscreen=true
-window/handheld/touchscreen_button_visibility=false
-window/handheld/touchscreen_control_view_show=false
-window/handheld/touchscreen_control_view_opacity=0.0
 
 [input_devices]
 
-pointing/emulate_touch_from_mouse=false
-pointing/emulate_mouse_from_touch=false
+pointing/emulate_touch_from_mouse=true
 
 [rendering]
 
