@@ -168,10 +168,11 @@ func _physics_process(delta):
     if current_time - last_jump_time >= jump_cooldown:
         can_jump = true
 
-# For direct touch input (mobile)
+# For direct touch input (mobile) - IMPROVED
 func handle_directional_input(touch_position):
     # Ensure we don't process input if blocked
     if input_blocked:
+        print("Mobile touch blocked - still processing previous input")
         return
         
     # Set the input_blocked flag to prevent double input
@@ -182,17 +183,21 @@ func handle_directional_input(touch_position):
     
     print("Mobile touch at x percent: ", touch_x_percent)
     
-    # Set movement direction based on touch position
-    if touch_x_percent < 0.5:
+    # Set movement direction based on touch position with improved zones
+    if touch_x_percent < 0.4:
         # Left side touch - jump left
         target_x_position = max(global_position.x - (screen_width * mobile_jump_horizontal_distance), screen_margin)
         print("Mobile LEFT jump to:", target_x_position)
-    else:
+    elif touch_x_percent > 0.6:
         # Right side touch - jump right
         target_x_position = min(global_position.x + (screen_width * mobile_jump_horizontal_distance), screen_width - screen_margin)
         print("Mobile RIGHT jump to:", target_x_position)
+    else:
+        # Center touch - jump straight up (no horizontal movement)
+        target_x_position = global_position.x
+        print("Mobile CENTER jump in place")
     
-    # Force setting to true to ensure jumps work on mobile
+    # Force to true for mobile - must always allow jumps on mobile
     can_jump = true
     jumping_to_position = true
     
@@ -200,9 +205,10 @@ func handle_directional_input(touch_position):
     var result = try_jump()
     print("Mobile jump result: ", result)
     
-    # Reset input blocking after a short delay
-    await get_tree().create_timer(0.1).timeout
+    # Longer input block for mobile to prevent accidental double jumps
+    await get_tree().create_timer(0.15).timeout
     input_blocked = false
+    print("Mobile input unblocked")
 
 # Called to make the player perform a jump (from button click)
 func perform_jump():
@@ -245,7 +251,7 @@ func do_jump_with_logging(input_source):
     print("  Velocity: " + str(velocity))
     return result
 
-# Original try_jump function with IMPROVED mobile handling
+# Improved try_jump function with better mobile handling
 func try_jump():
     # IMPROVED: Reset cooldown and force jump on mobile
     if is_mobile:
