@@ -37,28 +37,40 @@ func _ready() -> void:
 		print("Connected boomerang body_entered signal")
 	
 	# Make boomerang larger for better visibility
-	var scale_factor = 2.5  # Even larger for visibility
+	var scale_factor = 4.0  # INCREASED scale factor for much better visibility
 	if is_mobile:
-		scale_factor = 2.8  # Slightly larger on mobile
+		scale_factor = 4.5  # INCREASED even more on mobile
 	
-	# Try to load the boomerang texture explicitly
-	boomerang_texture = load("res://assets/sprites/boomerang.svg")
-	if boomerang_texture != null:
-		sprite.texture = boomerang_texture
-		print("Successfully loaded boomerang texture")
-	else:
-		print("ERROR: Could not load boomerang texture from assets/sprites/boomerang.svg")
-		
-		# Try a second path
-		boomerang_texture = load("res://assets/boomerang.svg")
+	# Try to load the boomerang texture from multiple possible paths
+	var possible_paths = [
+		"res://assets/sprites/boomerang.svg",
+		"res://assets/boomerang.svg",
+		"res://static/boomerang.svg",
+		"res://boomerang.svg"
+	]
+	
+	for path in possible_paths:
+		boomerang_texture = load(path)
 		if boomerang_texture != null:
 			sprite.texture = boomerang_texture
-			print("Successfully loaded boomerang texture from alternative path")
-		else:
-			print("ERROR: Could not load boomerang texture from assets/boomerang.svg either")
+			print("Successfully loaded boomerang texture from: " + path)
+			break
+	
+	if boomerang_texture == null:
+		# Force a texture for the boomerang - create a simple colored rectangle
+		print("WARNING: Failed to load boomerang texture. Creating a fallback shape.")
+		var fallback_texture = ImageTexture.create_from_image(Image.create(50, 50, false, Image.FORMAT_RGBA8))
+		# Draw a solid color on the texture
+		var image = fallback_texture.get_image()
+		image.fill(Color(1.0, 0.3, 0.3, 1.0))  # Bright red color for visibility
+		sprite.texture = fallback_texture
 	
 	# Scale both the sprite and collision shape
 	sprite.scale = Vector2(scale_factor, scale_factor)
+	
+	# Ensure sprite color is set to solid (no transparency)
+	sprite.modulate = Color(1.0, 0.3, 0.3, 1.0)  # Bright red for visibility
+	
 	if collision_shape:
 		collision_shape.scale = Vector2(scale_factor, scale_factor)
 	
@@ -72,9 +84,6 @@ func _ready() -> void:
 	monitorable = true
 	has_hit_player = false
 	
-	# Ensure sprite has no color changes and is visible
-	sprite.modulate = Color.WHITE
-	
 	print("Boomerang initialized with scale factor:", scale_factor)
 
 func _physics_process(delta: float) -> void:
@@ -86,7 +95,7 @@ func _physics_process(delta: float) -> void:
 	
 	# Ensure visibility and color stays consistent
 	visible = true
-	sprite.modulate = Color.WHITE
+	sprite.modulate = Color(1.0, 0.3, 0.3, 1.0)  # Keep it consistently red
 	
 	# Move along the arc path
 	t += delta * flight_speed * current_speed_multiplier / path_width
@@ -115,7 +124,7 @@ func throw(start_pos: Vector2, speed_multiplier: float = 1.0) -> void:
 	current_speed_multiplier = speed_multiplier
 	
 	# Ensure visibility and color stays consistent
-	sprite.modulate = Color.WHITE
+	sprite.modulate = Color(1.0, 0.3, 0.3, 1.0)  # Bright red for visibility
 	print("Boomerang thrown from position: ", start_pos)
 
 func reset() -> void:
@@ -142,7 +151,7 @@ func _on_body_entered(body: Node) -> void:
 		has_hit_player = true
 		
 		# Give a brief visual indication
-		sprite.modulate = Color(1.0, 0.5, 0.5)  # Red tint on collision
+		sprite.modulate = Color(1.0, 0.1, 0.1, 1.0)  # Even brighter red tint on collision
 		
 		print("Boomerang hit player at position: " + str(global_position))
 		print("Player position: " + str(body.global_position))
