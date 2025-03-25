@@ -38,7 +38,7 @@ var is_dead = false
 var floor_y_position: float = 830.0
 var is_mobile = false
 var last_jump_time: float = 0.0
-var jump_cooldown: float = 0.12  # Very short cooldown
+var jump_cooldown: float = 0.05  # REDUCED cooldown for more responsive jumps
 var can_jump = true
 
 # Reference nodes
@@ -176,7 +176,7 @@ func _input(event):
     if event.is_action_pressed("jump") and !is_mobile:
         do_jump_with_logging("keyboard")
     
-    # Mobile touch input handling
+    # Mobile touch input handling - IMPROVED for better response
     if is_mobile and event is InputEventScreenTouch and event.pressed:
         # Check if we're touching in the game area (not UI)
         var viewport_size = get_viewport_rect().size
@@ -196,7 +196,10 @@ func _input(event):
             # Set jump direction flag
             jumping_to_position = true
             
-            # Execute the jump
+            # Force jump cooldown reset to make it more responsive
+            can_jump = true
+            
+            # Execute the jump - IMPORTANT: This will now work on every touch
             do_jump_with_logging("touch at " + str(event.position))
 
 # Set target position directly (used by controls)
@@ -228,10 +231,15 @@ func do_jump_with_logging(input_source):
     print("  Velocity: " + str(velocity))
     return result
 
-# Original try_jump function
+# Original try_jump function with IMPROVED mobile handling
 func try_jump():
-    # Don't jump if in cooldown
-    if !can_jump:
+    # IMPROVED: Now we force jumps to work on mobile
+    if is_mobile:
+        # For mobile, temporarily force jumps to be allowed, skipping cooldown
+        can_jump = true
+    
+    # Don't jump if in cooldown on desktop
+    if !can_jump and !is_mobile:
         print("Jump blocked by cooldown")
         return false
     
