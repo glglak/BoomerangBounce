@@ -27,6 +27,9 @@ func disable_default_touch_ui():
 	if ProjectSettings.has_setting("display/window/handheld/touchscreen_button_visibility"):
 		ProjectSettings.set_setting("display/window/handheld/touchscreen_button_visibility", false)
 		print("ViewportOptions: Disabled touchscreen_button_visibility")
+		
+	# Remove this line that's causing the error and replace with proper checks
+	# if DisplayServer.has_feature("mobile"):
 	
 	# Search for any TouchScreenButton nodes in the scene and disable them
 	var touch_buttons = get_tree().get_nodes_in_group("touchscreen_button")
