@@ -16,7 +16,7 @@ An endless runner game built with Godot 4.2+, where you move, jump, and double j
 ## Controls
 
 - **Left/Right Movement**: Arrow keys, A/D keys, or on-screen buttons
-- **Jump**: Space, W, Up arrow, or on-screen button
+- **Jump**: Space, W, Up arrow, or tap screen
 - **Double Jump**: Press jump again while in the air
 - **Restart**: R key or restart button
 
@@ -106,3 +106,34 @@ Use any SVG editor like Inkscape, Adobe Illustrator, or online tools to modify t
 
 Replace the audio files in the `assets/audio/` directory with your own sounds.
 After adding custom audio, you may need to reimport them in Godot and update their properties.
+
+<!-- TROUBLESHOOTING_TAG -->
+## Troubleshooting Guide
+
+If you encounter issues with this game, please check the following:
+
+### Common Issues and Solutions
+
+1. **Mobile Controls Issues**
+   - If default mobile controls (gray squares, jump label) appear, check `project.godot` settings under display/window/handheld
+   - Set touchscreen_button_visibility to false
+
+2. **Particle Effects Errors**
+   - If seeing "Invalid set index 'scale_amount'" errors, check Godot version compatibility
+   - For Godot 3.x: use scale_amount property
+   - For Godot 4.x: use scale_amount_min and scale_amount_max properties
+
+3. **Game Ending Unexpectedly**
+   - This may be due to obstacle collisions - try adjusting player collision shape
+   - Make sure JumpEffect scene doesn't have CPUParticles2D using incompatible properties
+
+### When Reporting Issues
+
+Please include:
+- Godot version number
+- Full error message text
+- When/where the error occurs
+- Screenshot if applicable
+
+Reference this troubleshooting section when opening new support requests.
+<!-- END_TROUBLESHOOTING_TAG -->
