@@ -87,10 +87,38 @@ func _ready():
 	restart_in_progress = false
 	input_blocked = false
 	
+	# Disable default touch controls that might interfere with gameplay
+	disable_default_touch_controls()
+	
 	# Start game after a short delay
 	game_over_panel.visible = false
 	await get_tree().create_timer(0.5).timeout
 	start_game()
+
+# Disable default onscreen controls that might interfere with gameplay
+func disable_default_touch_controls():
+	# Check if we're on a mobile platform
+	if OS.get_name() == "Android" or OS.get_name() == "iOS":
+		print("Disabling default touch controls")
+		
+		# Disable mobile jump label and gray squares
+		if DisplayServer.has_feature("mobile"):
+			# Try to disable touchscreen button visibility via project settings at runtime
+			if ProjectSettings.has_setting("display/window/handheld/touchscreen_button_visibility"):
+				ProjectSettings.set_setting("display/window/handheld/touchscreen_button_visibility", false)
+				print("Disabled touchscreen button visibility via project settings")
+			
+			# Try to disable emulate touch from mouse
+			if ProjectSettings.has_setting("input_devices/pointing/emulate_touch_from_mouse"):
+				ProjectSettings.set_setting("input_devices/pointing/emulate_touch_from_mouse", false)
+				print("Disabled emulate touch from mouse")
+		
+		# Set any debugging visible elements to hidden
+		var debug_controls = get_tree().get_nodes_in_group("debug_touch")
+		if debug_controls and debug_controls.size() > 0:
+			for control in debug_controls:
+				control.visible = false
+			print("Disabled debug touch controls")
 
 func direct_connect_button_signals():
 	# This method ensures buttons are properly connected for touch and mouse events
@@ -207,12 +235,12 @@ func _unhandled_input(event):
 		# Only handle touch events in the game area (not on UI controls)
 		if event.position.y < screen_height - 150:  # Above control area
 			# Check if touch is on any UI elements first
-			if jump_button.get_global_rect().has_point(event.position):
+			if jump_button and jump_button.get_global_rect().has_point(event.position):
 				print("Jump button pressed via direct touch")
 				_on_jump_button_pressed()
 				return
 				
-			if restart_button.get_global_rect().has_point(event.position):
+			if restart_button and restart_button.get_global_rect().has_point(event.position):
 				print("Restart button pressed via direct touch")
 				restart_game()
 				return
@@ -222,7 +250,7 @@ func _unhandled_input(event):
 	
 	# Support restarting via touch on game over
 	elif event is InputEventScreenTouch and event.pressed and not game_active:
-		if game_over_panel.visible:
+		if game_over_panel.visible and gameover_restart_button:
 			if gameover_restart_button.get_global_rect().has_point(event.position):
 				print("Game over restart button pressed via direct touch")
 				restart_game()
