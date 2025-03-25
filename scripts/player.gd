@@ -11,18 +11,13 @@ var move_speed: float = 350.0  # Reduced to prevent too fast movement
 var target_x_position: float = 270.0  # Default to center
 var jumping_to_position: bool = false  # Track if we're in a directional jump
 
-# Jump properties - SIGNIFICANTLY STRONGER FOR MOBILE
-@export var jump_force: float = -1200.0
-@export var gravity: float = 2500.0
-@export var double_jump_force: float = -1400.0
-@export var triple_jump_force: float = -1600.0
+# Mobile/Desktop Detection
+var is_mobile = false
 
-# Mobile-specific parameters
-var mobile_jump_force_multiplier = 1.4  # Stronger jumps on mobile
-var mobile_double_jump_force_multiplier = 1.5
-var mobile_triple_jump_force_multiplier = 1.6
-var mobile_move_speed_multiplier = 1.3  # Faster horizontal movement on mobile
-var mobile_jump_horizontal_distance = 0.3  # As percentage of screen width
+# Jump properties - DRASTICALLY STRONGER
+var base_jump_force: float = -1500.0
+var base_double_jump_force: float = -1700.0
+var base_triple_jump_force: float = -1900.0
 
 # Character swap properties
 var character_states = {
@@ -40,11 +35,10 @@ var has_triple_jumped = false
 var jump_count = 0
 var is_dead = false
 var floor_y_position: float = 830.0  # Default value
-var is_mobile = false
 var last_jump_time: float = 0.0  # Track the last time a jump was performed
-var jump_cooldown: float = 0.15  # Reduced cooldown for better response
-var last_touch_position: Vector2 = Vector2.ZERO
-var can_jump = true  # Flag to control jump availability
+var can_jump = true  # Flag for jump availability
+var gravity_value = 2500.0  # Gravity force
+var jump_processing = false  # Flag to prevent multiple jump calls
 
 # Reference nodes
 @onready var animation_player = $AnimationPlayer
@@ -54,6 +48,14 @@ var can_jump = true  # Flag to control jump availability
 func _ready():
     # Check if we're on mobile
     is_mobile = OS.get_name() == "Android" or OS.get_name() == "iOS"
+    print("PLATFORM: " + ("MOBILE" if is_mobile else "DESKTOP"))
+    
+    # Setup input mapping for jumping
+    if not InputMap.has_action("jump"):
+        InputMap.add_action("jump")
+        var space_key = InputEventKey.new()
+        space_key.keycode = KEY_SPACE
+        InputMap.action_add_event("jump", space_key)
     
     # Preload textures
     preload_textures()
@@ -64,17 +66,18 @@ func _ready():
     # Force immediate position update
     _update_screen_metrics()
     
-    # Adjust collision shape size
-    if collision_shape:
-        var scale_factor = 1.0  # Default scale factor
-        collision_shape.scale = Vector2(scale_factor, scale_factor)
-    
     # Make sure we're using the normal character
     set_character_state("normal")
     
-    # Print debug info
-    print("Player initialized on", "MOBILE" if is_mobile else "DESKTOP")
-    print("Jump forces - Initial:", get_actual_jump_force(), " Double:", get_actual_double_jump_force(), " Triple:", get_actual_triple_jump_force())
+    # Add a click input action
+    if not InputMap.has_action("click"):
+        InputMap.add_action("click")
+        var click_event = InputEventMouseButton.new()
+        click_event.button_index = MOUSE_BUTTON_LEFT
+        InputMap.action_add_event("click", click_event)
+        
+    # Print jump forces
+    print("Jump forces: ", base_jump_force, " / ", base_double_jump_force, " / ", base_triple_jump_force)
 
 func preload_textures():
     # Load textures in advance to avoid delays when switching
@@ -100,7 +103,7 @@ func _update_screen_metrics():
     var viewport_rect = get_viewport_rect().size
     screen_width = viewport_rect.x
     
-    # Set floor position based on platform - use a bigger offset on mobile for controls
+    # Set floor position based on platform
     var floor_offset = 30
     if is_mobile:
         # On mobile, position higher to avoid controls at bottom
@@ -112,7 +115,7 @@ func _update_screen_metrics():
     # Start in the middle of the screen
     target_x_position = screen_width / 2
     global_position.x = target_x_position
-    global_position.y = floor_y_position - 20  # Start slightly above floor to prevent collision issues
+    global_position.y = floor_y_position - 20  # Start slightly above floor
     
     # Log screen metrics for debugging
     print("Screen size: ", viewport_rect, " Floor Y: ", floor_y_position, " Player position: ", global_position)
@@ -124,16 +127,10 @@ func _physics_process(delta):
     if is_dead:
         return
     
-    # First, check if the screen dimensions have changed
-    var current_viewport_rect = get_viewport_rect().size
-    var expected_floor_offset = 120 if is_mobile else 30
-    if abs(current_viewport_rect.x - screen_width) > 10 or abs(current_viewport_rect.y - floor_y_position - expected_floor_offset) > 10:
-        _update_screen_metrics()
-    
     # Apply gravity
     if not is_on_floor() and global_position.y < floor_y_position:
-        velocity.y += gravity * delta
-        velocity.y = min(velocity.y, 1800.0)  # Cap fall speed (increased for better precision)
+        velocity.y += gravity_value * delta
+        velocity.y = min(velocity.y, 2000.0)  # Cap fall speed
     else:
         # Ensure player stays on floor
         if global_position.y >= floor_y_position:
@@ -145,19 +142,17 @@ func _physics_process(delta):
         has_double_jumped = false
         has_triple_jumped = false
         jump_count = 0
-        jumping_to_position = false  # Reset position jump flag
-        can_jump = true  # Reset jump availability
+        jumping_to_position = false
+        jump_processing = false
+        can_jump = true
     
     # Handle horizontal movement
     var x_diff = target_x_position - global_position.x
-    var current_move_speed = move_speed * (mobile_move_speed_multiplier if is_mobile else 1.0)
+    var current_move_speed = move_speed * (1.5 if is_mobile else 1.0)
     
-    if abs(x_diff) > 5.0 and (jumping_to_position or is_jumping):
-        # Apply horizontal velocity for directional jumps or when moving while jumping
+    if abs(x_diff) > 5.0:
+        # Apply horizontal velocity
         velocity.x = sign(x_diff) * current_move_speed
-    elif abs(x_diff) > 5.0 and !is_jumping:
-        # When on ground, move more slowly to destination
-        velocity.x = sign(x_diff) * (current_move_speed * 0.7)
     else:
         # Arrived at destination
         velocity.x = 0
@@ -174,128 +169,95 @@ func _physics_process(delta):
     
     # Update animation based on state
     update_animation()
-    
-    # Check if jump cooldown has elapsed
-    var current_time = Time.get_ticks_msec() / 1000.0
-    if current_time - last_jump_time >= jump_cooldown:
-        can_jump = true
 
-# Helper functions to get the correct jump forces based on platform
-func get_actual_jump_force():
-    return jump_force * (mobile_jump_force_multiplier if is_mobile else 1.0)
-
-func get_actual_double_jump_force():
-    return double_jump_force * (mobile_double_jump_force_multiplier if is_mobile else 1.0)
-
-func get_actual_triple_jump_force():
-    return triple_jump_force * (mobile_triple_jump_force_multiplier if is_mobile else 1.0)
-
-func _input(event):
+# Handle all input events
+func _unhandled_input(event):
     if is_dead:
         return
-        
-    # Handle keyboard input (for desktop)
-    if event.is_action_pressed("jump") and !is_mobile:
-        try_jump()
     
-    # Handle touch input for directional jumping on mobile
+    # Desktop keyboard input
+    if not is_mobile and event.is_action_pressed("jump"):
+        perform_jump()
+    
+    # Desktop mouse input
+    if not is_mobile and event.is_action_pressed("click") and event is InputEventMouseButton:
+        handle_directional_input(event.position)
+    
+    # Mobile touch input
     if is_mobile and event is InputEventScreenTouch and event.pressed:
-        handle_mobile_touch(event.position)
+        print("Touch detected at: ", event.position)
+        handle_directional_input(event.position)
 
-# Dedicated function for mobile touch handling
-func handle_mobile_touch(touch_position):
-    # Store touch position for reference
-    last_touch_position = touch_position
-    
-    # Only process touch events if they're not on UI controls
+# Handle directional jump input
+func handle_directional_input(input_pos):
+    # Only process touches if they're not on UI controls
     var viewport_size = get_viewport_rect().size
-    if touch_position.y < viewport_size.y - 150:  # Above the control area
-        var touch_x_percent = touch_position.x / screen_width
+    if input_pos.y < viewport_size.y - 150:  # Above control area
+        print("Processing directional input")
         
-        # On mobile, use a percentage-based approach for more consistent jumps
-        if touch_x_percent < 0.5:
-            # Left side touch - jump left by a percentage of screen width
-            target_x_position = max(global_position.x - (screen_width * mobile_jump_horizontal_distance), screen_margin)
-            print("Mobile left jump to:", target_x_position, " (", touch_x_percent * 100, "% of screen)")
+        # Calculate horizontal direction
+        var input_x_percent = input_pos.x / screen_width
+        var horizontal_distance = screen_width * 0.3
+        
+        if input_x_percent < 0.5:
+            # Left side input - jump left
+            target_x_position = max(global_position.x - horizontal_distance, screen_margin)
+            print("Jump left to: ", target_x_position)
         else:
-            # Right side touch - jump right by a percentage of screen width
-            target_x_position = min(global_position.x + (screen_width * mobile_jump_horizontal_distance), screen_width - screen_margin)
-            print("Mobile right jump to:", target_x_position, " (", touch_x_percent * 100, "% of screen)")
+            # Right side input - jump right
+            target_x_position = min(global_position.x + horizontal_distance, screen_width - screen_margin)
+            print("Jump right to: ", target_x_position)
         
-        # Set flag to indicate directional jump
+        # Flag to indicate directional jump
         jumping_to_position = true
-        try_jump()
+        perform_jump()
 
-# Set target position directly (used for touch controls)
-func set_target_position(pos_x: float):
-    target_x_position = clamp(pos_x, screen_margin, screen_width - screen_margin)
-    jumping_to_position = true  # Mark that we're jumping to a position
-
-# Called from directional controls
-func move_left():
-    if is_mobile:
-        target_x_position = max(global_position.x - (screen_width * mobile_jump_horizontal_distance), screen_margin)
-    else:
-        target_x_position = max(global_position.x - screen_width/4, screen_margin)
-    print("Moving left to position:", target_x_position)
-
-func move_right():
-    if is_mobile:
-        target_x_position = min(global_position.x + (screen_width * mobile_jump_horizontal_distance), screen_width - screen_margin)
-    else:
-        target_x_position = min(global_position.x + screen_width/4, screen_width - screen_margin)
-    print("Moving right to position:", target_x_position)
-
-func try_jump():
-    # Don't allow jumping if we're in cooldown or can't jump
-    if !can_jump:
-        print("Jump blocked by cooldown")
-        return false
+# Perform jump with appropriate force
+func perform_jump():
+    if jump_processing:
+        print("Jump already in progress, ignoring")
+        return
     
-    # Update last jump time and set cooldown
-    last_jump_time = Time.get_ticks_msec() / 1000.0
-    can_jump = false
+    jump_processing = true
+    print("Attempting jump with count: ", jump_count)
     
-    # Calculate jump forces based on platform (stronger on mobile)
-    var current_jump_force = get_actual_jump_force()
-    var current_double_jump_force = get_actual_double_jump_force()
-    var current_triple_jump_force = get_actual_triple_jump_force()
+    # Calculate jump forces - much stronger on mobile
+    var jump_force = base_jump_force * (2.0 if is_mobile else 1.0)
+    var double_jump_force = base_double_jump_force * (2.0 if is_mobile else 1.0)
+    var triple_jump_force = base_triple_jump_force * (2.0 if is_mobile else 1.0)
     
-    # If on floor or haven't jumped yet, do first jump
+    # First jump
     if is_on_floor() or global_position.y >= floor_y_position - 20 or !is_jumping:
         jump_count = 1
-        velocity.y = current_jump_force
+        velocity.y = jump_force
         is_jumping = true
-        has_double_jumped = false
-        has_triple_jumped = false
         animation_player.play("jump")
-        emit_signal("jump_performed")  # Emit signal for sound
-        print("First jump with force:", current_jump_force, " (Mobile:", is_mobile, ")")
-        return true
-        
-    # If already jumped once but not twice, do double jump
+        emit_signal("jump_performed")
+        print("FIRST JUMP with force: ", jump_force)
+    
+    # Double jump    
     elif jump_count == 1:
         jump_count = 2
-        velocity.y = current_double_jump_force
+        velocity.y = double_jump_force
         has_double_jumped = true
         animation_player.play("double_jump")
-        emit_signal("jump_performed")  # Emit signal for sound
-        print("Double jump with force:", current_double_jump_force, " (Mobile:", is_mobile, ")")
-        return true
-        
-    # If already double jumped, do triple jump
+        emit_signal("jump_performed")
+        print("DOUBLE JUMP with force: ", double_jump_force)
+    
+    # Triple jump
     elif jump_count == 2:
         jump_count = 3
-        velocity.y = current_triple_jump_force
+        velocity.y = triple_jump_force
         has_triple_jumped = true
-        animation_player.play("double_jump")  # Reuse the same animation
-        emit_signal("jump_performed")  # Emit signal for sound
-        print("Triple jump with force:", current_triple_jump_force, " (Mobile:", is_mobile, ")")
-        return true
-        
-    # No more jumps available
-    return false
+        animation_player.play("double_jump")
+        emit_signal("jump_performed")
+        print("TRIPLE JUMP with force: ", triple_jump_force)
+    
+    # Small delay before allowing next jump
+    await get_tree().create_timer(0.1).timeout
+    jump_processing = false
 
+# Update character animation based on state
 func update_animation():
     # Don't update animations when dead
     if is_dead:
@@ -320,13 +282,14 @@ func update_animation():
         elif abs(velocity.x) <= 10 and not animation_player.current_animation == "idle":
             animation_player.play("idle")
 
+# Handle player hit
 func hit():
     if is_dead:
         return
     
     print("Player hit! Changing to hit character state")
     
-    # Stop any animations to prevent them overriding our texture change
+    # Stop any animations
     if animation_player.is_playing():
         animation_player.stop()
     
@@ -334,10 +297,10 @@ func hit():
     is_dead = true
     velocity = Vector2.ZERO
     
-    # Change character to hit state
+    # Change character state
     set_character_state("hit")
     
-    # Signal that player was hit
+    # Signal hit
     emit_signal("player_hit")
 
 # Set the character state (normal or hit)
@@ -346,36 +309,23 @@ func set_character_state(state: String):
         print("Changing character state from", current_character_state, "to", state)
         current_character_state = state
         
-        # Update the sprite based on the state
-        if state == "normal":
-            if normal_texture != null:
-                sprite.texture = normal_texture
-                sprite.modulate = Color.WHITE  # Normal color
-            else:
-                push_error("Normal texture is null when trying to set character state")
-                
+        # Update sprite texture
+        if state == "normal" and normal_texture != null:
+            sprite.texture = normal_texture
+            sprite.modulate = Color.WHITE
         elif state == "hit":
-            # Stop any animations to prevent them overriding our texture
-            if animation_player.is_playing():
-                animation_player.stop()
-                
             if hit_texture != null:
                 sprite.texture = hit_texture
-                sprite.modulate = Color.WHITE  # Normal color
+                sprite.modulate = Color.WHITE
                 print("Applied hit texture to player")
             else:
-                # Fallback - use normal texture with red tint
-                if normal_texture != null:
-                    sprite.texture = normal_texture
-                    sprite.modulate = Color(1.0, 0.5, 0.5, 1.0)  # Red tint
-                    print("Applied red tint fallback for hit state")
-                else:
-                    push_error("Both hit and normal textures are null")
+                # Fallback to red tint
+                sprite.modulate = Color(1.0, 0.5, 0.5, 1.0)
 
+# Reset player state
 func reset():
     print("Resetting player to normal state")
     
-    # Change back to normal character state
     set_character_state("normal")
     
     is_dead = false
@@ -384,13 +334,12 @@ func reset():
     has_triple_jumped = false
     jump_count = 0
     jumping_to_position = false
+    jump_processing = false
     can_jump = true
     
-    # Force position update
     _update_screen_metrics()
     
     target_x_position = screen_width / 2
     global_position = Vector2(target_x_position, floor_y_position - 20)
     velocity = Vector2.ZERO
-    sprite.modulate = Color.WHITE  # Reset color
     animation_player.play("idle")
