@@ -102,16 +102,15 @@ func disable_default_touch_controls():
 		print("Disabling default touch controls")
 		
 		# Disable mobile jump label and gray squares
-		if DisplayServer.has_feature("mobile"):
-			# Try to disable touchscreen button visibility via project settings at runtime
-			if ProjectSettings.has_setting("display/window/handheld/touchscreen_button_visibility"):
-				ProjectSettings.set_setting("display/window/handheld/touchscreen_button_visibility", false)
-				print("Disabled touchscreen button visibility via project settings")
-			
-			# Try to disable emulate touch from mouse
-			if ProjectSettings.has_setting("input_devices/pointing/emulate_touch_from_mouse"):
-				ProjectSettings.set_setting("input_devices/pointing/emulate_touch_from_mouse", false)
-				print("Disabled emulate touch from mouse")
+		# Try to disable touchscreen button visibility via project settings at runtime
+		if ProjectSettings.has_setting("display/window/handheld/touchscreen_button_visibility"):
+			ProjectSettings.set_setting("display/window/handheld/touchscreen_button_visibility", false)
+			print("Disabled touchscreen button visibility via project settings")
+		
+		# Try to disable emulate touch from mouse
+		if ProjectSettings.has_setting("input_devices/pointing/emulate_touch_from_mouse"):
+			ProjectSettings.set_setting("input_devices/pointing/emulate_touch_from_mouse", false)
+			print("Disabled emulate touch from mouse")
 		
 		# Set any debugging visible elements to hidden
 		var debug_controls = get_tree().get_nodes_in_group("debug_touch")
