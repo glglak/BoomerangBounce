@@ -11,6 +11,7 @@ var last_milestone = 0  # Track last milestone for sound effects
 # Platform detection variables
 var is_mobile = false
 var restart_in_progress = false  # Flag to prevent multiple restarts
+var input_blocked = false  # Additional flag to block rapid input
 
 # Path for saving high score
 const SAVE_FILE_PATH = "user://highscore.save"
@@ -84,6 +85,7 @@ func _ready():
 	
 	# Reset restart flag
 	restart_in_progress = false
+	input_blocked = false
 	
 	# Start game after a short delay
 	game_over_panel.visible = false
@@ -100,8 +102,9 @@ func direct_connect_button_signals():
 		restart_button.focus_mode = Control.FOCUS_ALL
 		restart_button.mouse_filter = Control.MOUSE_FILTER_STOP
 		
-		# Disconnect any existing signals
-		_safely_disconnect(restart_button, "pressed", self, "restart_game")
+		# IMPROVED: Disconnect any existing signals but handle null checks
+		if restart_button.pressed.is_connected(Callable(self, "restart_game")):
+			restart_button.pressed.disconnect(Callable(self, "restart_game"))
 		
 		# Connect directly 
 		restart_button.pressed.connect(Callable(self, "restart_game"))
@@ -114,8 +117,9 @@ func direct_connect_button_signals():
 		gameover_restart_button.focus_mode = Control.FOCUS_ALL
 		gameover_restart_button.mouse_filter = Control.MOUSE_FILTER_STOP
 		
-		# Disconnect any existing signals
-		_safely_disconnect(gameover_restart_button, "pressed", self, "restart_game")
+		# IMPROVED: Disconnect any existing signals but handle null checks
+		if gameover_restart_button.pressed.is_connected(Callable(self, "restart_game")):
+			gameover_restart_button.pressed.disconnect(Callable(self, "restart_game"))
 		
 		# Connect directly
 		gameover_restart_button.pressed.connect(Callable(self, "restart_game"))
@@ -128,17 +132,13 @@ func direct_connect_button_signals():
 		jump_button.focus_mode = Control.FOCUS_ALL
 		jump_button.mouse_filter = Control.MOUSE_FILTER_STOP
 		
-		# Disconnect any existing signals
-		_safely_disconnect(jump_button, "pressed", self, "_on_jump_button_pressed")
+		# IMPROVED: Disconnect any existing signals but handle null checks
+		if jump_button.pressed.is_connected(Callable(self, "_on_jump_button_pressed")):
+			jump_button.pressed.disconnect(Callable(self, "_on_jump_button_pressed"))
 		
 		# Connect directly
 		jump_button.pressed.connect(Callable(self, "_on_jump_button_pressed"))
 		print("Jump button connected")
-
-# Helper to safely disconnect signals
-func _safely_disconnect(obj, signal_name, target, method):
-	if obj and obj.is_connected(signal_name, Callable(target, method)):
-		obj.disconnect(signal_name, Callable(target, method))
 
 func setup_controls():
 	# Make controls visible and positioned properly for mobile
@@ -159,7 +159,8 @@ func setup_controls():
 		
 		# Size based on platform
 		if is_mobile:
-			restart_button.custom_minimum_size = Vector2(140, 80)
+			# INCREASED button size for better touch target
+			restart_button.custom_minimum_size = Vector2(180, 100)
 		else:
 			restart_button.custom_minimum_size = Vector2(100, 40)
 	
@@ -171,10 +172,12 @@ func setup_controls():
 		
 		# Size based on platform
 		if is_mobile:
-			gameover_restart_button.custom_minimum_size = Vector2(220, 100)
+			# INCREASED button size for better touch target
+			gameover_restart_button.custom_minimum_size = Vector2(280, 120)
 	
 	if jump_button and is_mobile:
-		jump_button.custom_minimum_size = Vector2(180, 100)
+		# INCREASED jump button size for better touch target
+		jump_button.custom_minimum_size = Vector2(220, 120)
 		jump_button.mouse_filter = Control.MOUSE_FILTER_STOP
 		jump_button.flat = false
 
@@ -192,6 +195,10 @@ func _process(delta):
 		_on_jump_button_pressed()
 
 func _unhandled_input(event):
+	# Ignore input if blocked
+	if input_blocked:
+		return
+		
 	# Handle raw screen touches for jumping in direction
 	if event is InputEventScreenTouch and event.pressed and game_active and player:
 		var screen_width = get_viewport().size.x
@@ -221,6 +228,10 @@ func _unhandled_input(event):
 				restart_game()
 
 func _on_jump_button_pressed():
+	# Ignore if input is blocked
+	if input_blocked:
+		return
+		
 	print("Jump button pressed in game manager")
 	if game_active and player:
 		player.perform_jump()
@@ -269,21 +280,23 @@ func start_game():
 func restart_game():
 	print("Restart game called!")  # Debug info
 	
-	# Prevent multiple simultaneous restarts
-	if restart_in_progress:
-		print("Restart already in progress, ignoring duplicate call")
+	# Prevent multiple simultaneous restarts or rapid input
+	if restart_in_progress or input_blocked:
+		print("Restart already in progress or input blocked, ignoring duplicate call")
 		return
 	
+	# Block input immediately
+	input_blocked = true
 	restart_in_progress = true
 	
 	# Visual feedback for mobile
 	if is_mobile:
 		if game_over_panel.visible and gameover_restart_button:
-			gameover_restart_button.modulate = Color(0.8, 0.8, 0.8)
+			gameover_restart_button.modulate = Color(0.7, 0.7, 0.7)
 			await get_tree().create_timer(0.1).timeout
 			gameover_restart_button.modulate = Color(1, 1, 1)
 		elif restart_button:
-			restart_button.modulate = Color(0.8, 0.8, 0.8)
+			restart_button.modulate = Color(0.7, 0.7, 0.7)
 			await get_tree().create_timer(0.1).timeout
 			restart_button.modulate = Color(1, 1, 1)
 	
@@ -295,11 +308,17 @@ func restart_game():
 	if wesopeso_sound and wesopeso_sound.playing:
 		wesopeso_sound.stop()
 	
-	start_game()
+	# Use a deferred call to start the game to avoid any call stack issues
+	call_deferred("_start_game_deferred")
 	
-	# Reset flag after a delay to prevent rapid restart clicking
-	await get_tree().create_timer(0.5).timeout
+	# Reset flags after a delay to prevent rapid restart clicking
+	await get_tree().create_timer(0.7).timeout
 	restart_in_progress = false
+	input_blocked = false
+
+func _start_game_deferred():
+	# This is called with call_deferred to avoid potential call stack issues
+	start_game()
 
 func _on_player_hit():
 	# Player hit an obstacle - game over
