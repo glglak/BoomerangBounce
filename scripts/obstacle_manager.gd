@@ -7,7 +7,7 @@ signal obstacle_passed
 @export var obstacle_scene: PackedScene
 @export var ground_obstacle_scene: PackedScene
 @export var air_obstacle_scene: PackedScene
-@export var boomerang_scene: PackedScene  # Added boomerang scene reference
+# Removed boomerang reference
 
 # Obstacle settings
 @export var spawn_x_position = 600.0  # Spawn just off-screen to the right
@@ -33,11 +33,7 @@ var game_time = 0.0
 var difficulty_factor = 0.0  # 0 to 1, increases over time
 var player_reference = null
 var screen_height = 960  # Default, will be updated
-var boomerang_spawn_chance = 0.6  # 60% chance of spawning a boomerang (increased)
 var player_y_position = 0  # Will track player's vertical position
-var last_boomerang_time = 0.0  # Time tracking for boomerang spawning
-var min_boomerang_interval = 5.0  # Minimum time between boomerangs
-var has_spawned_boomerang = false  # Track if we've spawned a boomerang
 
 func _ready():
 	randomize()  # Initialize random seed
@@ -48,19 +44,12 @@ func _ready():
 	# Wait a frame to ensure viewport size is correct
 	await get_tree().process_frame
 	update_screen_metrics()
-	
-	# Check if boomerang scene is available
-	if boomerang_scene:
-		print("Boomerang scene loaded successfully")
-	else:
-		push_error("Boomerang scene not loaded")
 		
 	# Print scene paths for debugging
 	print("Obstacle scene paths:")
 	print("- Regular: ", obstacle_scene.resource_path if obstacle_scene else "None")
 	print("- Ground: ", ground_obstacle_scene.resource_path if ground_obstacle_scene else "None")
 	print("- Air: ", air_obstacle_scene.resource_path if air_obstacle_scene else "None")
-	print("- Boomerang: ", boomerang_scene.resource_path if boomerang_scene else "None")
 
 func update_screen_metrics():
 	# Get the current viewport size
@@ -97,8 +86,6 @@ func start():
 	current_speed = initial_obstacle_speed
 	difficulty_factor = 0.0
 	spawn_timer = randf_range(min_spawn_interval, max_spawn_interval)
-	last_boomerang_time = 0
-	has_spawned_boomerang = false
 	
 	# Update player y position if player reference exists
 	if player_reference:
@@ -153,57 +140,35 @@ func spawn_obstacle():
 	var lane = randi() % 3  # Pick a random lane (0, 1, or 2)
 	var obstacle
 	
-	# Check if we should force a boomerang spawn if never spawned one
-	var should_spawn_boomerang = randf() < boomerang_spawn_chance
+	# Decide which type of regular obstacle to spawn
+	# 0 = regular obstacle, 1 = ground obstacle, 2 = air obstacle
+	var obstacle_type = randi() % 3
 	
-	# Force a boomerang spawn occasionally, especially if we haven't seen one yet
-	if !has_spawned_boomerang and game_time > 5.0:
-		should_spawn_boomerang = true
-	# Or if it's been a while since we spawned one
-	elif (game_time - last_boomerang_time) > min_boomerang_interval and randf() < 0.8:
-		should_spawn_boomerang = true
-	
-	if should_spawn_boomerang and boomerang_scene:
-		# Spawn a boomerang
-		obstacle = boomerang_scene.instantiate()
-		
-		# Update boomerang tracking
-		last_boomerang_time = game_time
-		has_spawned_boomerang = true
-		
-		print("Spawning boomerang obstacle at time:", game_time)
+	if obstacle_type == 0 and obstacle_scene:
+		obstacle = obstacle_scene.instantiate()
+		obstacle.set_meta("type", "regular")
+		print("Spawning regular obstacle")
+	elif obstacle_type == 1 and ground_obstacle_scene:
+		obstacle = ground_obstacle_scene.instantiate()
+		obstacle.set_meta("type", "ground")
+		print("Spawning ground obstacle")
+	elif obstacle_type == 2 and air_obstacle_scene:
+		obstacle = air_obstacle_scene.instantiate()
+		obstacle.set_meta("type", "air")
+		print("Spawning air obstacle")
+	elif obstacle_scene:  # Fallback to regular obstacle if chosen type isn't available
+		obstacle = obstacle_scene.instantiate()
+		obstacle.set_meta("type", "regular")
+		print("Fallback to regular obstacle")
 	else:
-		# Decide which type of regular obstacle to spawn
-		# 0 = regular obstacle, 1 = ground obstacle, 2 = air obstacle
-		var obstacle_type = randi() % 3
-		
-		if obstacle_type == 0 and obstacle_scene:
-			obstacle = obstacle_scene.instantiate()
-			obstacle.set_meta("type", "regular")
-			print("Spawning regular obstacle")
-		elif obstacle_type == 1 and ground_obstacle_scene:
-			obstacle = ground_obstacle_scene.instantiate()
-			obstacle.set_meta("type", "ground")
-			print("Spawning ground obstacle")
-		elif obstacle_type == 2 and air_obstacle_scene:
-			obstacle = air_obstacle_scene.instantiate()
-			obstacle.set_meta("type", "air")
-			print("Spawning air obstacle")
-		elif obstacle_scene:  # Fallback to regular obstacle if chosen type isn't available
-			obstacle = obstacle_scene.instantiate()
-			obstacle.set_meta("type", "regular")
-			print("Fallback to regular obstacle")
-		else:
-			print("Failed to spawn obstacle - no valid scene available")
-			return  # No valid obstacle scene to spawn
+		print("Failed to spawn obstacle - no valid scene available")
+		return  # No valid obstacle scene to spawn
 	
 	add_child(obstacle)
 	
 	# Connect obstacle's passed signal to our signal
 	if obstacle.has_signal("obstacle_passed"):
 		obstacle.connect("obstacle_passed", _on_obstacle_passed)
-	elif obstacle.has_signal("completed_loop") and obstacle is Boomerang:
-		obstacle.connect("completed_loop", _on_obstacle_passed)
 	
 	# Inform obstacle of player's x position
 	if player_reference and obstacle.has_method("set_player_position"):
@@ -214,40 +179,35 @@ func spawn_obstacle():
 	# Position obstacle based on type - ensure it's at player's mid level
 	var obstacle_y_position = player_y_position
 	
-	if obstacle is Boomerang:
-		# Special handling for boomerang - position at player level
-		obstacle.throw(Vector2(spawn_x_position, obstacle_y_position), 1.0 + difficulty_factor * 0.5)
-		print("Boomerang thrown at y position:", obstacle_y_position)
+	# Adjust based on obstacle type with small randomness for variety
+	var type_string = obstacle.get_meta("type", "regular")
+	var height_variance = randi() % 30 - 15  # Random -15 to +15 pixels (reduced variance)
+	
+	if type_string == "ground":
+		# Ground obstacles just above player level
+		obstacle_y_position = player_y_position + 20 + height_variance
+	elif type_string == "air":
+		# Air obstacles just below player level for easier jumping over
+		obstacle_y_position = player_y_position - 20 + height_variance
 	else:
-		# Adjust based on obstacle type with small randomness for variety
-		var type_string = obstacle.get_meta("type", "regular")
-		var height_variance = randi() % 30 - 15  # Random -15 to +15 pixels (reduced variance)
+		# Regular obstacles at player level with slight variance
+		obstacle_y_position = player_y_position + height_variance
 		
-		if type_string == "ground":
-			# Ground obstacles just above player level
-			obstacle_y_position = player_y_position + 20 + height_variance
-		elif type_string == "air":
-			# Air obstacles just below player level for easier jumping over
-			obstacle_y_position = player_y_position - 20 + height_variance
-		else:
-			# Regular obstacles at player level with slight variance
-			obstacle_y_position = player_y_position + height_variance
+	# Ensure the obstacle isn't too close to the top or bottom
+	obstacle_y_position = clamp(obstacle_y_position, 100, floor_y_position - 50)
 		
-		# Ensure the obstacle isn't too close to the top or bottom
-		obstacle_y_position = clamp(obstacle_y_position, 100, floor_y_position - 50)
+	# Set position
+	obstacle.position.y = obstacle_y_position
+	obstacle.position.x = spawn_x_position
+	obstacle.position.x += lane_positions[lane] - 270  # Offset based on lane
 		
-		# Set position
-		obstacle.position.y = obstacle_y_position
-		obstacle.position.x = spawn_x_position
-		obstacle.position.x += lane_positions[lane] - 270  # Offset based on lane
-		
-		print("Regular obstacle positioned at y:", obstacle_y_position, " (player at:", player_y_position, ")")
+	print("Regular obstacle positioned at y:", obstacle_y_position, " (player at:", player_y_position, ")")
 	
 	# As difficulty increases, sometimes spawn multiple obstacles at once
 	if difficulty_factor > 0.3 and randf() < difficulty_factor * 0.4:
 		# Spawn a second obstacle in a different lane
 		var second_lane = (lane + 1 + randi() % 2) % 3  # Ensure different lane
-		var second_obstacle_type = randi() % 3  # Don't spawn a second boomerang
+		var second_obstacle_type = randi() % 3
 		var second_obstacle
 		
 		if second_obstacle_type == 0 and obstacle_scene:
@@ -265,7 +225,7 @@ func spawn_obstacle():
 			
 			if second_obstacle.has_signal("obstacle_passed"):
 				second_obstacle.connect("obstacle_passed", _on_obstacle_passed)
-			
+				
 			if player_reference and second_obstacle.has_method("set_player_position"):
 				second_obstacle.set_player_position(player_reference.global_position.x)
 				
