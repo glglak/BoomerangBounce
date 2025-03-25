@@ -7,7 +7,7 @@ signal obstacle_passed
 @export var obstacle_scene: PackedScene
 @export var ground_obstacle_scene: PackedScene
 @export var air_obstacle_scene: PackedScene
-# Removed boomerang reference
+# Removed boomerang reference and all related functionality
 
 # Obstacle settings
 @export var spawn_x_position = 600.0  # Spawn just off-screen to the right
