@@ -38,8 +38,9 @@ var is_dead = false
 var floor_y_position: float = 830.0
 var is_mobile = false
 var last_jump_time: float = 0.0
-var jump_cooldown: float = 0.05  # REDUCED cooldown for more responsive jumps
+var jump_cooldown: float = 0.03  # SHORTER cooldown for more responsive jumps
 var can_jump = true
+var input_blocked = false  # New flag to prevent double input
 
 # Reference nodes
 @onready var animation_player = $AnimationPlayer
@@ -167,40 +168,53 @@ func _physics_process(delta):
     if current_time - last_jump_time >= jump_cooldown:
         can_jump = true
 
-# This is specific for mobile touch handling
-func _input(event):
-    if is_dead:
+# For direct touch input (mobile)
+func handle_directional_input(touch_position):
+    # Ensure we don't process input if blocked
+    if input_blocked:
         return
+        
+    # Set the input_blocked flag to prevent double input
+    input_blocked = true
     
-    # Desktop input handling
-    if event.is_action_pressed("jump") and !is_mobile:
-        do_jump_with_logging("keyboard")
+    # Perform jump in the direction of the touch
+    var touch_x_percent = touch_position.x / screen_width
     
-    # Mobile touch input handling - IMPROVED for better response
-    if is_mobile and event is InputEventScreenTouch and event.pressed:
-        # Check if we're touching in the game area (not UI)
-        var viewport_size = get_viewport_rect().size
-        if event.position.y < viewport_size.y - 150:
-            var touch_x_percent = event.position.x / screen_width
-            
-            # Set movement direction based on touch position
-            if touch_x_percent < 0.5:
-                # Left side touch - jump left
-                target_x_position = max(global_position.x - (screen_width * mobile_jump_horizontal_distance), screen_margin)
-                print("Mobile left jump to:", target_x_position, "(", touch_x_percent * 100, "% of screen)")
-            else:
-                # Right side touch - jump right
-                target_x_position = min(global_position.x + (screen_width * mobile_jump_horizontal_distance), screen_width - screen_margin)
-                print("Mobile right jump to:", target_x_position, "(", touch_x_percent * 100, "% of screen)")
-            
-            # Set jump direction flag
-            jumping_to_position = true
-            
-            # Force jump cooldown reset to make it more responsive
-            can_jump = true
-            
-            # Execute the jump - IMPORTANT: This will now work on every touch
-            do_jump_with_logging("touch at " + str(event.position))
+    print("Mobile touch at x percent: ", touch_x_percent)
+    
+    # Set movement direction based on touch position
+    if touch_x_percent < 0.5:
+        # Left side touch - jump left
+        target_x_position = max(global_position.x - (screen_width * mobile_jump_horizontal_distance), screen_margin)
+        print("Mobile LEFT jump to:", target_x_position)
+    else:
+        # Right side touch - jump right
+        target_x_position = min(global_position.x + (screen_width * mobile_jump_horizontal_distance), screen_width - screen_margin)
+        print("Mobile RIGHT jump to:", target_x_position)
+    
+    # Force setting to true to ensure jumps work on mobile
+    can_jump = true
+    jumping_to_position = true
+    
+    # Execute the jump
+    var result = try_jump()
+    print("Mobile jump result: ", result)
+    
+    # Reset input blocking after a short delay
+    await get_tree().create_timer(0.1).timeout
+    input_blocked = false
+
+# Called to make the player perform a jump (from button click)
+func perform_jump():
+    # Perform the jump if we can
+    if !is_dead and can_jump:
+        # If on the ground, jump in place (no horizontal movement)
+        if !is_jumping:
+            jump_count = 0
+            do_jump_with_logging("button")
+        # If already jumping, perform double or triple jump
+        else:
+            do_jump_with_logging("button - mid-air")
 
 # Set target position directly (used by controls)
 func set_target_position(pos_x: float):
@@ -233,12 +247,12 @@ func do_jump_with_logging(input_source):
 
 # Original try_jump function with IMPROVED mobile handling
 func try_jump():
-    # IMPROVED: Now we force jumps to work on mobile
+    # IMPROVED: Reset cooldown and force jump on mobile
     if is_mobile:
-        # For mobile, temporarily force jumps to be allowed, skipping cooldown
+        # Always allow jump on mobile devices to improve responsiveness
         can_jump = true
     
-    # Don't jump if in cooldown on desktop
+    # Check cooldown on desktop
     if !can_jump and !is_mobile:
         print("Jump blocked by cooldown")
         return false
@@ -365,6 +379,7 @@ func reset():
     jump_count = 0
     jumping_to_position = false
     can_jump = true
+    input_blocked = false
     
     # Reset position
     _update_screen_metrics()
