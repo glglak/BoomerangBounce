@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3 uid="uid://cylqg6qd4u4gm"]
+[gd_scene load_steps=20 format=3 uid="uid://cylqg6qd4u4gm"]
 
 [ext_resource type="Script" path="res://scripts/game_manager.gd" id="1_6l7x2"]
 [ext_resource type="Texture2D" uid="uid://cuyx1syyeykv5" path="res://assets/sprites/background1.svg" id="2_mak7p"]
@@ -11,7 +11,6 @@
 [ext_resource type="PackedScene" uid="uid://di5cpcmm3pq3d" path="res://scenes/Obstacle.tscn" id="9_cvnnp"]
 [ext_resource type="PackedScene" uid="uid://de31v15iowxic" path="res://scenes/GroundObstacle.tscn" id="10_k2pgj"]
 [ext_resource type="PackedScene" uid="uid://2cagq6hbisev" path="res://scenes/AirObstacle.tscn" id="11_2tl64"]
-[ext_resource type="PackedScene" uid="uid://cpaxp3vjtwsam" path="res://scenes/Boomerang.tscn" id="12_27ow7"]
 [ext_resource type="AudioStream" uid="uid://do48jmbpn6twn" path="res://assets/audio/background.mp3" id="13_cde6p"]
 [ext_resource type="AudioStream" uid="uid://dqpnhhow5jlre" path="res://assets/audio/jump.mp3" id="14_8qsj5"]
 [ext_resource type="AudioStream" uid="uid://dtacjykdo8g1e" path="res://assets/audio/score.mp3" id="15_3rkqw"]
@@ -111,7 +110,6 @@ script = ExtResource("8_r8kic")
 obstacle_scene = ExtResource("9_cvnnp")
 ground_obstacle_scene = ExtResource("10_k2pgj")
 air_obstacle_scene = ExtResource("11_2tl64")
-boomerang_scene = ExtResource("12_27ow7")
 min_spawn_interval = 1.5
 max_spawn_interval = 3.0
 initial_obstacle_speed = 200.0
