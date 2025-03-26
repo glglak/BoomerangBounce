@@ -25,7 +25,11 @@ var directional_jump_touch_idx: Array = []  # Store indexes for directional jump
 
 # Debounce system
 var jump_debounce_timer = null
-var jump_cooldown = 0.05  # Shorter cooldown for more responsive jumps
+var jump_cooldown = 0.03  # Shorter cooldown for more responsive jumps
+
+# Screen division for touch zones
+var left_zone_width = 0.33  # Left third of screen
+var right_zone_width = 0.33  # Right third of screen
 
 func _ready() -> void:
 	# Create debounce timer for jump
@@ -71,28 +75,28 @@ func _ready() -> void:
 func _configure_buttons_for_mobile() -> void:
 	# Make buttons more prominent and easier to tap
 	if left_button:
-		left_button.modulate = Color(1.0, 1.0, 1.0, 1.0)  # Full opacity
+		left_button.modulate = Color(1.0, 1.0, 1.0, 0.8)  # Slightly transparent for visibility
 		left_button.mouse_filter = Control.MOUSE_FILTER_STOP
 		left_button.focus_mode = Control.FOCUS_ALL
 		left_button.ignore_texture_size = true
 		left_button.stretch_mode = TextureButton.STRETCH_SCALE
-		left_button.custom_minimum_size = Vector2(120, 120)
+		left_button.custom_minimum_size = Vector2(150, 150)  # Larger touch target
 	
 	if right_button:
-		right_button.modulate = Color(1.0, 1.0, 1.0, 1.0)  # Full opacity
+		right_button.modulate = Color(1.0, 1.0, 1.0, 0.8)  # Slightly transparent for visibility
 		right_button.mouse_filter = Control.MOUSE_FILTER_STOP
 		right_button.focus_mode = Control.FOCUS_ALL
 		right_button.ignore_texture_size = true
 		right_button.stretch_mode = TextureButton.STRETCH_SCALE
-		right_button.custom_minimum_size = Vector2(120, 120)
+		right_button.custom_minimum_size = Vector2(150, 150)  # Larger touch target
 	
 	if jump_button:
-		jump_button.modulate = Color(1.0, 1.0, 1.0, 1.0)  # Full opacity
+		jump_button.modulate = Color(1.0, 1.0, 1.0, 0.8)  # Slightly transparent for visibility
 		jump_button.mouse_filter = Control.MOUSE_FILTER_STOP
 		jump_button.focus_mode = Control.FOCUS_ALL
 		jump_button.ignore_texture_size = true
 		jump_button.stretch_mode = TextureButton.STRETCH_SCALE
-		jump_button.custom_minimum_size = Vector2(150, 150)
+		jump_button.custom_minimum_size = Vector2(180, 180)  # Larger touch target
 
 func _input(event: InputEvent) -> void:
 	# Handle touch input with improved detection
@@ -100,7 +104,8 @@ func _input(event: InputEvent) -> void:
 		_handle_touch_event(event)
 		
 	# Ensure input event gets processed correctly
-	get_viewport().set_input_as_handled()
+	if event:
+		get_viewport().set_input_as_handled()
 
 func _handle_touch_event(event: InputEventScreenTouch) -> void:
 	var touch_position = event.position
@@ -140,13 +145,13 @@ func _handle_touch_event(event: InputEventScreenTouch) -> void:
 			# Then signal to jump immediately (no delay)
 			if jump_debounce_timer.time_left <= 0:
 				emit_signal("jump_pressed")
-				jump_debounce_timer.start()
+				jump_debounce_timer.start(0.01)  # Very short cooldown for responsive jumps
 			
 			# Register input actions to ensure compatibility
 			Input.action_press("jump")
 			
 			# Auto-release jump after short time
-			await get_tree().create_timer(0.05).timeout
+			await get_tree().create_timer(0.02).timeout
 			Input.action_release("jump")
 			get_viewport().set_input_as_handled()
 	else:
@@ -163,13 +168,27 @@ func _handle_touch_event(event: InputEventScreenTouch) -> void:
 			directional_jump_touch_idx.erase(event.index)
 
 func _is_touch_in_left_control(pos: Vector2) -> bool:
-	return left_button.get_global_rect().has_point(pos)
+	# Use both button hit detection and screen zone detection for better mobile experience
+	if left_button and left_button.get_global_rect().has_point(pos):
+		return true
+		
+	# Additional check for left third of screen for easy jumping
+	var screen_width = get_viewport().size.x
+	var screen_height = get_viewport().size.y
+	return pos.x < screen_width * left_zone_width and pos.y > screen_height * 0.5
 
 func _is_touch_in_right_control(pos: Vector2) -> bool:
-	return right_button.get_global_rect().has_point(pos)
+	# Use both button hit detection and screen zone detection for better mobile experience
+	if right_button and right_button.get_global_rect().has_point(pos):
+		return true
+		
+	# Additional check for right third of screen for easy jumping
+	var screen_width = get_viewport().size.x
+	var screen_height = get_viewport().size.y
+	return pos.x > screen_width * (1.0 - right_zone_width) and pos.y > screen_height * 0.5
 
 func _is_touch_in_jump_control(pos: Vector2) -> bool:
-	return jump_button.get_global_rect().has_point(pos)
+	return jump_button and jump_button.get_global_rect().has_point(pos)
 
 # Button signal handlers
 func _on_left_button_down() -> void:
@@ -180,8 +199,18 @@ func _on_left_button_down() -> void:
 	var viewport_rect = get_viewport_rect().size
 	emit_signal("set_target_position", viewport_rect.x * 0.25)  # 1/4 of the screen from left
 	
+	# Also signal jump for better mobile experience
+	if jump_debounce_timer.time_left <= 0:
+		emit_signal("jump_pressed")
+		jump_debounce_timer.start(0.01)  # Very short cooldown
+	
 	# Also register input action for player script to pick up
 	Input.action_press("move_left")
+	Input.action_press("jump")
+	
+	# Auto-release jump after short time
+	await get_tree().create_timer(0.02).timeout
+	Input.action_release("jump")
 
 func _on_left_button_up() -> void:
 	emit_signal("move_left_released")
@@ -197,8 +226,18 @@ func _on_right_button_down() -> void:
 	var viewport_rect = get_viewport_rect().size
 	emit_signal("set_target_position", viewport_rect.x * 0.75)  # 3/4 of the screen from left
 	
+	# Also signal jump for better mobile experience
+	if jump_debounce_timer.time_left <= 0:
+		emit_signal("jump_pressed")
+		jump_debounce_timer.start(0.01)  # Very short cooldown
+	
 	# Also register input action for player script to pick up
 	Input.action_press("move_right")
+	Input.action_press("jump")
+	
+	# Auto-release jump after short time
+	await get_tree().create_timer(0.02).timeout
+	Input.action_release("jump")
 
 func _on_right_button_up() -> void:
 	emit_signal("move_right_released")
@@ -218,8 +257,8 @@ func _on_jump_button_down() -> void:
 		Input.action_press("jump")
 		
 		# Start debounce timer
-		jump_debounce_timer.start()
+		jump_debounce_timer.start(0.01)  # Very short cooldown for responsive jumps
 		
 		# Auto-release the jump input after a short time
-		await get_tree().create_timer(0.05).timeout
+		await get_tree().create_timer(0.02).timeout
 		Input.action_release("jump")
