@@ -11,11 +11,11 @@ var move_speed: float = 350.0
 var target_x_position: float = 270.0
 var jumping_to_position: bool = false
 
-# Jump properties
-var jump_force: float = -1600.0  # MUCH stronger jumping force
-var gravity: float = 2500.0
-var double_jump_force: float = -1800.0
-var triple_jump_force: float = -2000.0
+# Jump properties - INCREASED FORCES FOR STRONGER JUMPS
+var jump_force: float = -2200.0  # MUCH stronger jumping force
+var gravity: float = 3500.0  # Increased gravity
+var double_jump_force: float = -2400.0  # Stronger double jump
+var triple_jump_force: float = -2600.0  # Stronger triple jump
 
 # Mobile adjustments
 var mobile_jump_horizontal_distance = 0.3  # As percentage of screen width
@@ -41,6 +41,7 @@ var last_jump_time: float = 0.0
 var jump_cooldown: float = 0.03  # SHORTER cooldown for more responsive jumps
 var can_jump = true
 var input_blocked = false  # New flag to prevent double input
+var force_floor_check = false  # New flag to enforce floor detection
 
 # Reference nodes
 @onready var animation_player = $AnimationPlayer
@@ -119,32 +120,37 @@ func _physics_process(delta):
     if abs(current_viewport_rect.x - screen_width) > 10 or abs(current_viewport_rect.y - floor_y_position - expected_floor_offset) > 10:
         _update_screen_metrics()
     
+    # IMPROVED FLOOR DETECTION
+    var was_on_floor = is_on_floor() or global_position.y >= floor_y_position - 20
+    
     # Apply gravity when airborne
-    if not is_on_floor() and global_position.y < floor_y_position:
+    if not was_on_floor:
         velocity.y += gravity * delta
-        velocity.y = min(velocity.y, 2000.0)  # Cap fall speed
+        velocity.y = min(velocity.y, 3000.0)  # Cap fall speed but allow for higher speed
     else:
         # On floor - reset states
-        if global_position.y >= floor_y_position:
+        if global_position.y >= floor_y_position - 20:
             global_position.y = floor_y_position - 10
             velocity.y = 0
+            force_floor_check = false
             
-        # Reset all jump states
-        is_jumping = false
-        has_double_jumped = false
-        has_triple_jumped = false
-        jump_count = 0
-        jumping_to_position = false
-        can_jump = true
+        # Reset all jump states if on floor and not actively jumping
+        if not force_floor_check:
+            is_jumping = false
+            has_double_jumped = false
+            has_triple_jumped = false
+            jump_count = 0
+            jumping_to_position = false
+            can_jump = true
     
     # Handle horizontal movement
     var x_diff = target_x_position - global_position.x
     if abs(x_diff) > 5.0:
         var speed_factor = 1.0
         if jumping_to_position or is_jumping:
-            speed_factor = 1.0  # Full speed during jumps
+            speed_factor = 1.5  # FASTER speed during jumps for better responsiveness
         else:
-            speed_factor = 0.7  # Slower on ground
+            speed_factor = 0.8  # Slightly higher speed on ground
         
         velocity.x = sign(x_diff) * move_speed * speed_factor
     else:
@@ -197,16 +203,19 @@ func handle_directional_input(touch_position):
         target_x_position = global_position.x
         print("Mobile CENTER jump in place")
     
-    # Force to true for mobile - must always allow jumps on mobile
+    # ENABLE FORCE FLOOR CHECK TO MAKE JUMPS WORK ON MOBILE
+    force_floor_check = false
+    
+    # Force immediate jump for mobile
     can_jump = true
     jumping_to_position = true
     
     # Execute the jump
     var result = try_jump()
-    print("Mobile jump result: ", result)
+    print("Mobile jump result: ", result, " with jump_count=", jump_count)
     
-    # Longer input block for mobile to prevent accidental double jumps
-    await get_tree().create_timer(0.15).timeout
+    # Shorter input block for improved response
+    await get_tree().create_timer(0.1).timeout
     input_blocked = false
     print("Mobile input unblocked")
 
@@ -217,6 +226,7 @@ func perform_jump():
         # If on the ground, jump in place (no horizontal movement)
         if !is_jumping:
             jump_count = 0
+            force_floor_check = false  # Reset floor check to allow proper jumping
             do_jump_with_logging("button")
         # If already jumping, perform double or triple jump
         else:
@@ -257,6 +267,7 @@ func try_jump():
     if is_mobile:
         # Always allow jump on mobile devices to improve responsiveness
         can_jump = true
+        force_floor_check = false  # Reset floor check for mobile to allow proper jumping
     
     # Check cooldown on desktop
     if !can_jump and !is_mobile:
@@ -267,13 +278,14 @@ func try_jump():
     last_jump_time = Time.get_ticks_msec() / 1000.0
     can_jump = false
     
-    # First jump
-    if is_on_floor() or global_position.y >= floor_y_position - 20 or !is_jumping:
+    # First jump - IMPROVED GROUND CHECK LOGIC
+    if is_on_floor() or global_position.y >= floor_y_position - 20 or !is_jumping or jump_count == 0:
         jump_count = 1
         velocity.y = jump_force
         is_jumping = true
         has_double_jumped = false
         has_triple_jumped = false
+        force_floor_check = true  # Enable force check to ensure we don't immediately reset jump state
         animation_player.play("jump")
         emit_signal("jump_performed")
         print("First jump with force:", jump_force)
@@ -386,6 +398,7 @@ func reset():
     jumping_to_position = false
     can_jump = true
     input_blocked = false
+    force_floor_check = false
     
     # Reset position
     _update_screen_metrics()
