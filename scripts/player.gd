@@ -123,6 +123,10 @@ func _physics_process(delta):
     # IMPROVED FLOOR DETECTION
     var was_on_floor = is_on_floor() or global_position.y >= floor_y_position - 20
     
+    # Check for jump input on mobile - USING PRESSED INSTEAD OF JUST_PRESSED
+    if is_mobile and Input.is_action_pressed("ui_accept"):
+        _on_mobile_jump_pressed()
+    
     # Apply gravity when airborne
     if not was_on_floor:
         velocity.y += gravity * delta
@@ -174,6 +178,23 @@ func _physics_process(delta):
     if current_time - last_jump_time >= jump_cooldown:
         can_jump = true
 
+# NEW FUNCTION - Handle mobile jump input using is_action_pressed
+func _on_mobile_jump_pressed():
+    if !is_dead and can_jump and !input_blocked:
+        input_blocked = true
+        
+        # Simple vertical jump for basic input
+        if !is_jumping:
+            jump_count = 0
+            force_floor_check = false
+            do_jump_with_logging("mobile input")
+        else:
+            do_jump_with_logging("mobile input - mid-air")
+            
+        # Short cooldown to prevent multiple jumps
+        await get_tree().create_timer(0.1).timeout
+        input_blocked = false
+
 # For direct touch input (mobile) - IMPROVED
 func handle_directional_input(touch_position):
     # Ensure we don't process input if blocked
@@ -210,7 +231,7 @@ func handle_directional_input(touch_position):
     can_jump = true
     jumping_to_position = true
     
-    # Execute the jump
+    # Execute the jump - USING action_pressed INSTEAD OF action_just_pressed
     var result = try_jump()
     print("Mobile jump result: ", result, " with jump_count=", jump_count)
     
