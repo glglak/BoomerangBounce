@@ -12,6 +12,7 @@ An endless runner game built with Godot 4.2+, where you move, jump, and double j
 * **Instant restart**: Press R key or the restart button to immediately restart after game over
 * **Dynamic backgrounds**: Background changes every 10 points till 40, then stays at the final background
 * **Dynamic audio**: Different sounds play at score milestones and during gameplay
+* **Mobile optimized**: Improved touch controls for consistent jumping on mobile devices
 
 ## Controls
 
@@ -134,6 +135,10 @@ If you encounter issues with this game, please check the following:
 1. **Mobile Controls Issues**
    - If default mobile controls (gray squares, jump label) appear, check `project.godot` settings under display/window/handheld
    - Set touchscreen_button_visibility to false
+   - For jump functionality not working on mobile, the issue has been fixed by:
+     - Using `is_action_pressed()` instead of `is_action_just_pressed()` for mobile inputs
+     - Adding a dedicated jump handler function for mobile devices
+     - Creating a custom `ui_jump` action mapped to appropriate inputs
 
 2. **Particle Effects Errors**
    - If seeing "Invalid set index 'scale_amount'" errors, check Godot version compatibility
@@ -144,6 +149,19 @@ If you encounter issues with this game, please check the following:
    - This may be due to obstacle collisions - try adjusting player collision shape
    - Make sure JumpEffect scene doesn't have CPUParticles2D using incompatible properties
 
+4. **Other Mobile-Specific Issues**
+   - If touch input feels inconsistent, try adjusting the `input_blocked` timeout values in player.gd
+   - Ensure mobile platform detection is working correctly (check console for "MOBILE" vs "DESKTOP" messages)
+   - For directional movement problems, check the `mobile_jump_horizontal_distance` variable in player.gd
+
+### Recent Fixes
+
+1. **Jump Functionality on Mobile** (March 2025)
+   - Fixed jump detection on mobile by changing from `is_action_just_pressed()` to `is_action_pressed()`
+   - Added a dedicated mobile jump handler function: `_on_mobile_jump_pressed()`
+   - Improved input handling to prevent accidental double jumps
+   - Modified game_manager.gd to use platform-specific input detection methods
+
 ### When Reporting Issues
 
 Please include:
@@ -151,6 +169,7 @@ Please include:
 - Full error message text
 - When/where the error occurs
 - Screenshot if applicable
+- Platform (desktop or mobile device type)
 
 Reference this troubleshooting section when opening new support requests.
 <!-- END_TROUBLESHOOTING_TAG -->
