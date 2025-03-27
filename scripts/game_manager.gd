@@ -79,6 +79,14 @@ func _ready():
 		r_key.keycode = KEY_R
 		InputMap.action_add_event("restart", r_key)
 	
+	# Make sure "ui_jump" action exists for mobile
+	if not InputMap.has_action("ui_jump"):
+		InputMap.add_action("ui_jump")
+		# Add touch/space input to jump action
+		var jump_key = InputEventKey.new()
+		jump_key.keycode = KEY_SPACE
+		InputMap.action_add_event("ui_jump", jump_key)
+	
 	# Initialize backgrounds
 	_set_background_for_score(0)
 	
@@ -195,9 +203,15 @@ func _process(delta):
 	# Update game time (used for difficulty scaling)
 	game_time += delta
 	
-	# Input handling for keyboard
-	if Input.is_action_just_pressed("ui_accept") or Input.is_action_just_pressed("ui_select"):
-		_on_player_tap()
+	# Input handling for keyboard or basic touch - CHANGED TO WORK BETTER ON MOBILE
+	if is_mobile:
+		# On mobile use is_action_pressed for more consistent jump detection
+		if Input.is_action_pressed("ui_accept") or Input.is_action_pressed("ui_select") or Input.is_action_pressed("ui_jump"):
+			_on_player_tap()
+	else:
+		# On desktop use is_action_just_pressed for precise jump timing
+		if Input.is_action_just_pressed("ui_accept") or Input.is_action_just_pressed("ui_select") or Input.is_action_just_pressed("ui_jump"):
+			_on_player_tap()
 
 func _unhandled_input(event):
 	# Ignore input if blocked
