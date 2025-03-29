@@ -42,6 +42,7 @@ var jump_cooldown: float = 0.03  # SHORTER cooldown for more responsive jumps
 var can_jump = true
 var input_blocked = false  # New flag to prevent double input
 var force_floor_check = false  # New flag to enforce floor detection
+var last_action_time: float = 0.0  # Track last action time for debouncing
 
 # Reference nodes
 @onready var animation_player = $AnimationPlayer
@@ -71,6 +72,27 @@ func _ready():
     # Log a proper initialization message
     print("Player initialized on", "MOBILE" if is_mobile else "DESKTOP")
     print("Jump settings - Force:", jump_force, "Double:", double_jump_force, "Triple:", triple_jump_force)
+    
+    # CRUCIAL - Create ui_jump action specifically for mobile
+    if not InputMap.has_action("ui_jump"):
+        print("Creating ui_jump action")
+        InputMap.add_action("ui_jump")
+        
+        # Add keyboard jump keys
+        var space_key = InputEventKey.new()
+        space_key.keycode = KEY_SPACE
+        InputMap.action_add_event("ui_jump", space_key)
+        
+        var w_key = InputEventKey.new()
+        w_key.keycode = KEY_W
+        InputMap.action_add_event("ui_jump", w_key)
+        
+        var up_key = InputEventKey.new()
+        up_key.keycode = KEY_UP
+        InputMap.action_add_event("ui_jump", up_key)
+    
+    # Initialize last action time
+    last_action_time = Time.get_ticks_msec() / 1000.0
 
 func preload_textures():
     print("Loading player textures...")
@@ -123,9 +145,13 @@ func _physics_process(delta):
     # IMPROVED FLOOR DETECTION
     var was_on_floor = is_on_floor() or global_position.y >= floor_y_position - 20
     
-    # Check for jump input on mobile - USING PRESSED INSTEAD OF JUST_PRESSED
-    if is_mobile and Input.is_action_pressed("ui_accept"):
-        _on_mobile_jump_pressed()
+    # DIRECT CHECK FOR MOBILE JUMP - CRITICAL FIX
+    if is_mobile:
+        # Check ANY input action for jumping - MORE PERMISSIVE
+        if (Input.is_action_pressed("ui_accept") or 
+            Input.is_action_pressed("ui_select") or 
+            Input.is_action_pressed("ui_jump")):
+            force_mobile_jump()
     
     # Apply gravity when airborne
     if not was_on_floor:
@@ -178,22 +204,54 @@ func _physics_process(delta):
     if current_time - last_jump_time >= jump_cooldown:
         can_jump = true
 
-# NEW FUNCTION - Handle mobile jump input using is_action_pressed
-func _on_mobile_jump_pressed():
-    if !is_dead and can_jump and !input_blocked:
-        input_blocked = true
+# FIXED VERSION - Force a jump on mobile to ensure it works
+func force_mobile_jump():
+    # Enforce a minimum time between actions to prevent spam
+    var current_time = Time.get_ticks_msec() / 1000.0
+    if current_time - last_action_time < 0.2:  # 200ms debounce
+        return
         
-        # Simple vertical jump for basic input
-        if !is_jumping:
+    last_action_time = current_time
+    
+    # Perform jump directly
+    if !is_dead:
+        # Reset block to allow jumping
+        input_blocked = false
+        can_jump = true
+        
+        # If on ground, do first jump
+        if !is_jumping or global_position.y >= floor_y_position - 20:
             jump_count = 0
             force_floor_check = false
-            do_jump_with_logging("mobile input")
-        else:
-            do_jump_with_logging("mobile input - mid-air")
+            global_position.y -= 5  # Small position boost to ensure we leave the ground
             
-        # Short cooldown to prevent multiple jumps
-        await get_tree().create_timer(0.1).timeout
-        input_blocked = false
+            # Set jump velocity directly
+            velocity.y = jump_force
+            emit_signal("jump_performed")
+            print("MOBILE DIRECT JUMP EXECUTED - First jump")
+            
+            # Update state after jump
+            jump_count = 1
+            is_jumping = true
+            animation_player.play("jump")
+        # If already jumping, do double/triple jump
+        elif is_jumping and !has_triple_jumped:
+            if !has_double_jumped:
+                # Double jump
+                velocity.y = double_jump_force
+                has_double_jumped = true
+                jump_count = 2
+                emit_signal("jump_performed")
+                print("MOBILE DIRECT JUMP EXECUTED - Double jump")
+                animation_player.play("double_jump")
+            else:
+                # Triple jump
+                velocity.y = triple_jump_force
+                has_triple_jumped = true
+                jump_count = 3
+                emit_signal("jump_performed")
+                print("MOBILE DIRECT JUMP EXECUTED - Triple jump")
+                animation_player.play("double_jump")
 
 # For direct touch input (mobile) - IMPROVED
 func handle_directional_input(touch_position):
@@ -224,16 +282,15 @@ func handle_directional_input(touch_position):
         target_x_position = global_position.x
         print("Mobile CENTER jump in place")
     
-    # ENABLE FORCE FLOOR CHECK TO MAKE JUMPS WORK ON MOBILE
+    # Reset flags to ensure jump works
     force_floor_check = false
     
     # Force immediate jump for mobile
     can_jump = true
     jumping_to_position = true
     
-    # Execute the jump - USING action_pressed INSTEAD OF action_just_pressed
-    var result = try_jump()
-    print("Mobile jump result: ", result, " with jump_count=", jump_count)
+    # EXECUTE JUMP DIRECTLY FOR MOBILE
+    force_mobile_jump()
     
     # Shorter input block for improved response
     await get_tree().create_timer(0.1).timeout
@@ -242,6 +299,12 @@ func handle_directional_input(touch_position):
 
 # Called to make the player perform a jump (from button click)
 func perform_jump():
+    # On mobile, always use the direct force method
+    if is_mobile:
+        force_mobile_jump()
+        return
+        
+    # For desktop:
     # Perform the jump if we can
     if !is_dead and can_jump:
         # If on the ground, jump in place (no horizontal movement)
@@ -282,7 +345,7 @@ func do_jump_with_logging(input_source):
     print("  Velocity: " + str(velocity))
     return result
 
-# Improved try_jump function with better mobile handling
+# Standard jump function - primarily for desktop
 func try_jump():
     # IMPROVED: Reset cooldown and force jump on mobile
     if is_mobile:
