@@ -12,6 +12,7 @@ var last_milestone = 0  # Track last milestone for sound effects
 var is_mobile = false
 var restart_in_progress = false  # Flag to prevent multiple restarts
 var input_blocked = false  # Additional flag to block rapid input
+var last_touch_time = 0.0  # For touch input debouncing
 
 # Path for saving high score
 const SAVE_FILE_PATH = "user://highscore.save"
@@ -45,6 +46,9 @@ const SAVE_FILE_PATH = "user://highscore.save"
 
 func _ready():
 	randomize()
+	
+	# Track last touch time
+	last_touch_time = Time.get_ticks_msec() / 1000.0
 	
 	# Force portrait orientation for mobile
 	is_mobile = OS.get_name() == "Android" or OS.get_name() == "iOS"
@@ -165,9 +169,9 @@ func setup_controls():
 	
 	# Set up help label
 	if is_mobile:
-		help_label.text = "Tap left/right side of screen\nto jump in that direction"
+		help_label.text = "Tap anywhere on screen to jump\n(tap left/right/center for direction)"
 	else:
-		help_label.text = "Tap left/right side of screen\nor use Space to jump"
+		help_label.text = "Tap screen or use Space/W/Up\nto jump"
 	
 	# Adjust button appearance and position based on platform
 	if restart_button:
@@ -203,23 +207,23 @@ func _process(delta):
 	# Update game time (used for difficulty scaling)
 	game_time += delta
 	
-	# Input handling for keyboard or basic touch - CHANGED TO WORK BETTER ON MOBILE
-	if is_mobile:
-		# On mobile use is_action_pressed for more consistent jump detection
-		if Input.is_action_pressed("ui_accept") or Input.is_action_pressed("ui_select") or Input.is_action_pressed("ui_jump"):
-			_on_player_tap()
-	else:
-		# On desktop use is_action_just_pressed for precise jump timing
-		if Input.is_action_just_pressed("ui_accept") or Input.is_action_just_pressed("ui_select") or Input.is_action_just_pressed("ui_jump"):
-			_on_player_tap()
+	# No longer needed - player handles direct jump detection
+	# We're moving all input detection to _unhandled_input for more direct control
 
 func _unhandled_input(event):
 	# Ignore input if blocked
 	if input_blocked:
 		return
+	
+	# Handle any kind of touch on mobile	
+	if event is InputEventScreenTouch and event.pressed and game_active:
+		# Debounce touch input
+		var current_time = Time.get_ticks_msec() / 1000.0
+		if current_time - last_touch_time < 0.2:  # 200ms debounce
+			return
+			
+		last_touch_time = current_time
 		
-	# Handle raw screen touches for jumping in direction
-	if event is InputEventScreenTouch and event.pressed and game_active and player:
 		var screen_width = get_viewport().size.x
 		var screen_height = get_viewport().size.y
 		
@@ -230,9 +234,10 @@ func _unhandled_input(event):
 				print("Restart button pressed via direct touch")
 				restart_game()
 				return
-			
-			# If not on UI elements, forward to player to handle jump logic
-			player.handle_directional_input(event.position)
+				
+			# If not on UI elements, always forward the touch to player for jumping
+			if player and is_mobile:
+				player.handle_directional_input(event.position)
 	
 	# Support restarting via touch on game over
 	elif event is InputEventScreenTouch and event.pressed and not game_active:
@@ -240,6 +245,11 @@ func _unhandled_input(event):
 			if gameover_restart_button.get_global_rect().has_point(event.position):
 				print("Game over restart button pressed via direct touch")
 				restart_game()
+	
+	# Handle keyboard input for jumping on desktop
+	elif not is_mobile and game_active and event is InputEventKey and event.pressed:
+		if event.keycode == KEY_SPACE or event.keycode == KEY_W or event.keycode == KEY_UP:
+			_on_player_tap()
 
 func _on_player_tap():
 	# Ignore if input is blocked
